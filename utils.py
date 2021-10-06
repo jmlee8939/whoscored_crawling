@@ -352,7 +352,7 @@ def crawling_seasons(path, region, tournament, season_number, season_name):
         if len(mat_df)%10 ==0:
             mat_df.to_csv(season_name+'_match.csv')
             time.sleep(4) 
-        print(time.time()-start_time)
+        # print(time.time()-start_time)
     mat_df.to_csv(season_name+'_match.csv')
     print(error_list)
     return(error_list)   
@@ -428,8 +428,6 @@ def crwaling_all_matches(path, region, tournament, season_number, season_name):
     
     """
     error_lis = crawling_seasons(path, region, tournament, season_number, season_name)
-    match_number = pd.read_csv(season + '_match_number.csv')['0']
-    match_no = len(match_number)
-    result = crawling_seasons_add(path,season,lis)
+    result = crawling_seasons_add(path, season_name, error_lis)
     return(result)
 
