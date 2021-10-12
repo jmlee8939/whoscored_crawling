@@ -29,7 +29,7 @@ ex) PL 1920 table
 
 
 
-... more teams and features 
+... more teams
 
 
 ## Seasnoal player data
@@ -53,6 +53,7 @@ ex) PL 1920 player
 |Sadio Mane     |26         |Liverpool|29 |AM(CLR),FW|31  |2756|7      |1.7 |31.5|81.6|0.3    |1    |0.1 |7.45  |4  |18   |3  |0  |2.2|1.2       |7  |2      |1.5   |0.4|1.6 |2.9   |1.3    |0.4  |1.3  |0       |0.2  |0.8|0     |0   |
 |Mohamed Salah  |26         |Liverpool|29 |AM(CLR),FW|33  |2888|10     |1.8 |28.8|76.5|0.3    |0.4  |0.1 |7.4   |1  |19   |1  |0  |3.9|0.4       |6  |1.5    |0.5   |0.6|2   |2.6   |0.5    |0.2  |0.5  |0       |0.1  |0.5|0     |0   |
 
+... more players
 
 ## match results data 
 
