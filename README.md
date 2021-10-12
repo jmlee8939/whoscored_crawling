@@ -8,9 +8,11 @@ I want to crop this data for my soccer data analysis.
 
 ## seasonal team data
 sesonal statistics of teams
+ex)
 - seasonal wins, draws, losses
 - seasonal goals(scored), goals(conceded)  
 ...
+
 
 
 ## seasnoal player data
