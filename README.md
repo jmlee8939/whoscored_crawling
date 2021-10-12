@@ -10,10 +10,12 @@ I want to crop this data for my soccer data analysis.
 #### Seasonal statistics of teams
 details are explained in *"seasonal team data.ipynb"* 
 
-ex)
-- seasonal wins, draws, losses
-- seasonal goals(scored), goals(conceded)  
+features 
+  - seasonal wins, draws, losses
+  - seasonal goals(scored), goals(conceded)  
 ...
+
+ex) PL 1920 table
 
 | team_name         | P  | W  | D  | L  | GF  | GA | GD | Pts | Goals | Shots pg | Yellow | Red | Poss% | 
 |-------------------|----|----|----|----|-----|----|----|-----|-------|----------|--------|-----|-------| 
