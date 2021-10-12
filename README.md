@@ -12,6 +12,8 @@ details are explained in *"seasonal team data.ipynb"*
 #### Seasonal statistics of teams
   - seasonal wins, draws, losses
   - seasonal goals(scored), goals(conceded)  
+  - seasonal possesion %
+  - seasonal gotten card  
 ...
 
 ex) PL 1920 table
