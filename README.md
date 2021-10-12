@@ -7,7 +7,7 @@ a lot of soccer data for various seasons and leagues in this website.
 I want to crop this data for my soccer data analysis.
 
 ## Seasonal team data
-#### Sesonal statistics of teams
+#### Seasonal statistics of teams
 ex)
 - seasonal wins, draws, losses
 - seasonal goals(scored), goals(conceded)  
