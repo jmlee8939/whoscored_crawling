@@ -11,6 +11,8 @@ import pickle
 import numpy as np
 from selenium import webdriver
 import os
+import sys
+from tqdm import tqdm
 
 def crawling_match_url(path, region_number, tournaments_number, season_number, api_delay_term=5):
     """
@@ -36,21 +38,23 @@ def crawling_match_url(path, region_number, tournaments_number, season_number, a
 
     # wait get league team datas
     match_link= []
-    for i in range(40):
-        time.sleep(api_delay_term)
-        elements = driver.find_elements_by_css_selector('a.result-1.rc')
-        for element in elements:
-            match_link.append(element.get_attribute('href'))
+    with tqdm(total=40, file=sys.stdout) as pbar :
+        for i in range(40):
+            time.sleep(api_delay_term)
+            elements = driver.find_elements_by_css_selector('a.result-1.rc')
+            for element in elements:
+                match_link.append(element.get_attribute('href'))
 
-        # click
-        try : 
-            a = driver.find_element_by_css_selector('a.previous.button.ui-state-default.rc-l.is-default')
-            a.click()
-        except : 
-            break
-        
-        time.sleep(2)
-        print(i)
+            # click
+            try : 
+                a = driver.find_element_by_css_selector('a.previous.button.ui-state-default.rc-l.is-default')
+                a.click()
+            except : 
+                break
+
+            time.sleep(2)
+            pbar.update(1)
+            pbar.set_description('page {}'.format(i+1))
     
     driver.close()
     return list(set(match_link))
@@ -407,12 +411,11 @@ def crawling_seasons_add(path, season_name, missing_list):
         if len(mat_df)%10 ==0:
             mat_df.to_csv(season_name+'_add_match.csv')
             time.sleep(4) 
-        print(time.time()-start_time)
     mat_df.to_csv(season_name+'_add_match.csv')
     print(error_list)    
     return(error_list)   
 
-def crwaling_all_matches(path, region, tournament, season_number, season_name):
+def crawling_all_matches(path, region, tournament, season_number, season_name):
     """
     combine all functions and save all match results from certain seasons
     
