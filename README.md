@@ -18,7 +18,7 @@ details are explained in *"seasonal team data.ipynb"*
 
 ex) PL 1920 table
 
-|team_name        |P  |W        |D  |L         |GF |GA  |GD |Pts|Goals|Shotspg|Yellow|Red|Poss%|Pass%|A_Won|Rating|Shotedpg|Tacklespg|Interceptpg|Foulspg|Offsidespg|ShotsOT pg|Dribblespg|Fouledpg|
+|team_name        |P  |W        |D  |L         |GF |GA  |GD |Pts|Goals|Shotspg|Yellow|Red|Poss%|Pass%|A_Won|Rating|Shotedpg|Tacklespg|Interceptpg|Foulspg|Offsidespg|ShotsOTpg|Dribblespg|Fouledpg|
 |-----------------|---|---------|---|----------|---|----|---|---|-----|-------|------|---|-----|-----|-----|------|--------|---------|-----------|-------|----------|-----------|----------|--------|
 |Liverpool        |38 |32       |3  |3         |85 |33  |52 |99 |85   |15.6   |38    |1  |59.6 |84.3 |17.6 |6.94  |9       |14.5     |9.3        |8.7    |1.4       |6.1       |10.2      |7.7     |
 |Manchester City  |38 |26       |3  |9         |102|35  |67 |81 |102  |19.6   |60    |4  |62.6 |89.3 |13.6 |7.05  |7.4     |13.5     |9.3        |9.5    |1.8       |7         |12.8      |7.8     |
