@@ -392,7 +392,7 @@ def crawling_seasons_add(path, season_name, missing_list):
         match = match_number.iloc[missing_match_no]
     
         try :
-            temp_dict = crawling_game_results_add(path, match, 4)
+            temp_dict = crawling_game_results(path, match, 4)
             mat_df.loc[len(mat_df)] = temp_dict
             print('match_number {} : cawling done'.format(missing_match_no))
         except :
@@ -400,7 +400,7 @@ def crawling_seasons_add(path, season_name, missing_list):
             print('match_number {} : error'.format(missing_match_no))
             
             try :             
-                temp_dict = crawling_game_results_add(path, match, 4)
+                temp_dict = crawling_game_results(path, match, 4)
                 mat_df.loc[len(mat_df)] = temp_dict
                 print('match_number {} : crawling done (retry)'.format(missing_match_no))
                 
@@ -434,3 +434,125 @@ def crawling_all_matches(path, region, tournament, season_number, season_name):
     result = crawling_seasons_add(path, season_name, error_lis)
     return(result)
 
+
+
+def league_table_added(URL, api_delay_term=3):
+    """
+    crawling league table with additional features
+    ex) shot per game, Tackles per game ... etc.
+    
+    Args : 
+        URL : league table URL
+        
+    Output : 
+        league table (data.frame)
+    
+    """
+    url = str(URL)
+    driver = webdriver.Chrome('./chromedriver')
+    driver.get(url)
+    
+    time.sleep(api_delay_term)
+    
+    league_table_df = pd.DataFrame(columns=[
+        "team_name", "P", "W", "D", "L", "GF", "GA", "GD", "Pts"])
+    elements = driver.find_elements_by_class_name('standings')[0].find_elements_by_css_selector("tr")
+    
+    for element in elements:
+        league_table_dict = { 
+            "team_name": element.find_elements_by_css_selector("td")[0].find_elements_by_css_selector("a")[0].text,     
+            "P": element.find_elements_by_css_selector("td")[1].text,
+            "W": element.find_elements_by_css_selector("td")[2].text, 
+            "D": element.find_elements_by_css_selector("td")[3].text,
+            "L": element.find_elements_by_css_selector("td")[4].text, 
+            "GF": element.find_elements_by_css_selector("td")[5].text, 
+            "GA": element.find_elements_by_css_selector("td")[6].text,
+            "GD": element.find_elements_by_css_selector("td")[7].text,
+            "Pts": element.find_elements_by_css_selector("td")[8].text,
+        }
+        league_table_df.loc[len(league_table_df)] = league_table_dict
+    
+    time.sleep(api_delay_term)
+    
+    starter = driver.find_elements_by_id("sub-navigation")
+    starter = starter[0].find_elements_by_css_selector("li")[2]
+    starter.click()
+    
+    
+    team_stat_df1 = pd.DataFrame(columns=[
+        "team_name", "Goals", "Shots pg", "Yellow", "Red", "Poss%", "Pass%", 
+        "A_Won", "Rating"
+    ])
+    elements = driver.find_elements_by_id("top-team-stats-summary-content")
+    elements = elements[0].find_elements_by_css_selector("tr")
+    
+    for element in elements:
+        team_table_dict1 = { 
+            "team_name": element.find_elements_by_css_selector("td")[0].find_elements_by_css_selector("a")[0].text.split('. ')[1],     
+            "Goals": element.find_elements_by_css_selector("td")[1].text,
+            "Shots pg": element.find_elements_by_css_selector("td")[2].text, 
+            "Yellow": element.find_elements_by_css_selector("td")[3].find_elements_by_css_selector("span")[0].text, 
+            "Red": element.find_elements_by_css_selector("td")[3].find_elements_by_css_selector("span")[1].text, 
+            "Poss%": element.find_elements_by_css_selector("td")[4].text, 
+            "Pass%": element.find_elements_by_css_selector("td")[5].text,
+            "A_Won": element.find_elements_by_css_selector("td")[6].text,
+            "Rating": element.find_elements_by_css_selector("td")[7].text,
+        }
+        team_stat_df1.loc[len(team_stat_df1)] = team_table_dict1
+    
+    element = driver.find_element_by_css_selector("a[href='#stage-team-stats-defensive']")
+    element.click()
+    
+    time.sleep(api_delay_term)
+    
+    
+    team_stat_df2 = pd.DataFrame(columns=[
+        "team_name", "Shoted pg", "Tackles pg", "Intercept pg", "Fouls pg", "Offsides pg"
+    ])
+    elements = driver.find_elements_by_id("statistics-team-table-defensive")
+    elements = elements[0].find_elements_by_id("top-team-stats-summary-content")
+    elements = elements[0].find_elements_by_css_selector("tr")
+    
+    for element in elements:
+        team_table_dict2 = { 
+            "team_name": element.find_elements_by_css_selector("td")[0].find_elements_by_css_selector("a")[0].text.split('. ')[1],     
+            'Shoted pg': element.find_elements_by_css_selector("td")[1].text,
+            'Tackles pg': element.find_elements_by_css_selector("td")[2].text,
+            'Intercept pg': element.find_elements_by_css_selector("td")[3].text, 
+            'Fouls pg': element.find_elements_by_css_selector("td")[4].text, 
+            'Offsides pg': element.find_elements_by_css_selector("td")[5].text, 
+        }
+        team_stat_df2.loc[len(team_stat_df2)] = team_table_dict2
+    
+    element = driver.find_element_by_css_selector("a[href='#stage-team-stats-offensive']")
+    element.click()
+    
+    time.sleep(api_delay_term)
+    
+    team_stat_df3 = pd.DataFrame(columns=[
+        "team_name", "Shots OT pg", "Dribbles pg", "Fouled pg"
+    ])
+    elements = driver.find_elements_by_id("statistics-team-table-offensive")
+    elements = elements[0].find_elements_by_id("top-team-stats-summary-content")
+    elements = elements[0].find_elements_by_css_selector("tr")
+    
+    for element in elements: 
+        team_table_dict3 = { 
+            "team_name": element.find_elements_by_css_selector("td")[0].find_elements_by_css_selector("a")[0].text.split('. ')[1],     
+            'Shots OT pg': element.find_elements_by_css_selector("td")[2].text,
+            'Dribbles pg': element.find_elements_by_css_selector("td")[3].text, 
+            'Fouled pg': element.find_elements_by_css_selector("td")[4].text, 
+        }
+        team_stat_df3.loc[len(team_stat_df3)] = team_table_dict3
+        
+        
+    team_stat_df = pd.merge(league_table_df, team_stat_df1, how='left', on='team_name')
+    team_stat_df = pd.merge(team_stat_df, team_stat_df2, how='left', on='team_name')
+    team_stat_df = pd.merge(team_stat_df, team_stat_df3, how='left', on='team_name')
+    
+    # close webdriver
+    driver.close()
+    
+    return team_stat_df
+    
+    return league_table_df
