@@ -1,9 +1,9 @@
 # Whoscored_crawling
 by jaeminiman  
 soccer_data_crawling from [whoscored.com](http://whoscored.com)  
-using chrome version --  94.0.4606.81(64bit)  
-using chromdriver -- 94.0.4606.61
-using seleium version2 (now updating for selenium3)
+using chrome version -- 109.0.5414.74(64bit)  
+using chromdriver -- ChromeDriver 109.0.5414.74
+using seleium -- 4.3.0
 
 a lot of soccer data for various seasons and leagues in this website.
 I want to crop this data for my soccer data analysis.
