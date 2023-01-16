@@ -10,6 +10,7 @@ import time
 import pickle
 import numpy as np
 from selenium import webdriver
+from selenium.webdriver.common.by import By
 import os
 import sys
 from tqdm import tqdm
@@ -41,13 +42,13 @@ def crawling_match_url(path, region_number, tournaments_number, season_number, a
     with tqdm(total=40, file=sys.stdout) as pbar :
         for i in range(40):
             time.sleep(api_delay_term)
-            elements = driver.find_elements_by_css_selector('a.result-1.rc')
+            elements = driver.find_elements(By.CSS_SELECTOR, 'a.result-1.rc')
             for element in elements:
                 match_link.append(element.get_attribute('href'))
 
             # click
             try : 
-                a = driver.find_element_by_css_selector('a.previous.button.ui-state-default.rc-l.is-default')
+                a = driver.find_element(By.CSS_SELECTOR, 'a.previous.button.ui-state-default.rc-l.is-default')
                 a.click()
             except : 
                 break
@@ -84,57 +85,57 @@ def crawling_game_results(path, url, api_delay_term=4):
     url_matchreport = url.replace('Live','MatchReport')
     
     driver.get(url)
-    match_log = driver.find_element_by_css_selector('div.match-centre-stats').find_elements_by_css_selector('span.match-centre-stat-value')
-    home_shot = match_log[2].text
-    away_shot = match_log[3].text
-    home_possession  = match_log[4].text
-    away_possession = match_log[5].text
-    home_pass_success = match_log[6].text
-    away_pass_success = match_log[7].text
-    home_dribbles = match_log[8].text
-    away_dribbles = match_log[9].text
-    home_aerials_won = match_log[10].text
-    away_aerials_won = match_log[11].text
-    home_tackles = match_log[12].text
-    away_tackles = match_log[13].text
-    home_corners = match_log[14].text
-    away_corners = match_log[15].text
-    home_dispossessed = match_log[16].text
-    away_dispossessed = match_log[17].text
+    match_log = driver.find_element(By.CSS_SELECTOR, 'div.match-centre-stats').find_elements(By.CSS_SELECTOR, 'span.match-centre-stat-value')
+    home_shot = match_log[2].get_attribute("textContent").split("\t")[0]
+    away_shot = match_log[3].get_attribute("textContent").split("\t")[0]
+    home_possession  = match_log[4].get_attribute("textContent").split("\t")[0]
+    away_possession = match_log[5].get_attribute("textContent").split("\t")[0]
+    home_pass_success = match_log[6].get_attribute("textContent").split("\t")[0]
+    away_pass_success = match_log[7].get_attribute("textContent").split("\t")[0]
+    home_dribbles = match_log[8].get_attribute("textContent").split("\t")[0]
+    away_dribbles = match_log[9].get_attribute("textContent").split("\t")[0]
+    home_aerials_won = match_log[10].get_attribute("textContent").split("\t")[0]
+    away_aerials_won = match_log[11].get_attribute("textContent").split("\t")[0]
+    home_tackles = match_log[12].get_attribute("textContent").split("\t")[0]
+    away_tackles = match_log[13].get_attribute("textContent").split("\t")[0]
+    home_corners = match_log[14].get_attribute("textContent").split("\t")[0]
+    away_corners = match_log[15].get_attribute("textContent").split("\t")[0]
+    home_dispossessed = match_log[16].get_attribute("textContent").split("\t")[0]
+    away_dispossessed = match_log[17].get_attribute("textContent").split("\t")[0]
     
     driver.get(url_preview)
     time.sleep(api_delay_term)
     # get home and away
-    missing_players_home = driver.find_element_by_css_selector('div.col12-lg-6.col12-m-6.col12-s-6.col12-xs-12.home.small-display-on')
-    ratings = missing_players_home.find_elements_by_css_selector('td.rating')
+    missing_players_home = driver.find_element(By.CSS_SELECTOR, 'div.col12-lg-6.col12-m-6.col12-s-6.col12-xs-12.home.small-display-on')
+    ratings = missing_players_home.find_elements(By.CSS_SELECTOR, 'td.rating')
     home_missing_player = len(ratings)
     home_missing_player_rating = []
     for rating in ratings:
-        try : home_missing_player_rating.append(float(rating.text))
+        try : home_missing_player_rating.append(float(rating.get_attribute("textContent").split("\t")[0]))
         except : continue
     home_missing_player_rating = round(np.mean(np.array(home_missing_player_rating)),2)
     
 
-    missing_players_away = driver.find_element_by_css_selector('div.col12-lg-6.col12-m-6.col12-s-6.col12-xs-12.away.small-display-off')
-    ratings = missing_players_away.find_elements_by_css_selector('td.rating')
+    missing_players_away = driver.find_element(By.CSS_SELECTOR, 'div.col12-lg-6.col12-m-6.col12-s-6.col12-xs-12.away.small-display-off')
+    ratings = missing_players_away.find_elements(By.CSS_SELECTOR, 'td.rating')
     away_missing_player = len(ratings)
     away_missing_player_rating = []
     for rating in ratings:
-        try : away_missing_player_rating.append(float(rating.text))
+        try : away_missing_player_rating.append(float(rating.get_attribute("textContent").split("\t")[0]))
         except : continue
     away_missing_player_rating = round(np.mean(np.array(away_missing_player_rating)),2)
     
-    home = driver.find_element_by_css_selector('span.col12-lg-4.col12-m-4.col12-s-0.col12-xs-0.home.team').text
-    away = driver.find_element_by_css_selector('span.col12-lg-4.col12-m-4.col12-s-0.col12-xs-0.away.team').text
-    elements = driver.find_elements_by_css_selector('div.info-block.cleared')
+    home = driver.find_element(By.CSS_SELECTOR, 'span.col12-lg-4.col12-m-4.col12-s-0.col12-xs-0.home.team').get_attribute("textContent").split("\t")[0]
+    away = driver.find_element(By.CSS_SELECTOR, 'span.col12-lg-4.col12-m-4.col12-s-0.col12-xs-0.away.team').get_attribute("textContent").split("\t")[0]
+    elements = driver.find_elements(By.CSS_SELECTOR, 'div.info-block.cleared')
     score = elements[1]
-    half_home_score = score.find_elements_by_css_selector('dd')[0].text.split(':')[0]
-    half_away_score = score.find_elements_by_css_selector('dd')[0].text.split(':')[1]
-    full_home_score = score.find_elements_by_css_selector('dd')[1].text.split(':')[0]
-    full_away_score = score.find_elements_by_css_selector('dd')[1].text.split(':')[1]
+    half_home_score = score.find_elements(By.CSS_SELECTOR, 'dd')[0].get_attribute("textContent").split("\t")[0].split(':')[0]
+    half_away_score = score.find_elements(By.CSS_SELECTOR, 'dd')[0].get_attribute("textContent").split("\t")[0].split(':')[1]
+    full_home_score = score.find_elements(By.CSS_SELECTOR, 'dd')[1].get_attribute("textContent").split("\t")[0].split(':')[0]
+    full_away_score = score.find_elements(By.CSS_SELECTOR, 'dd')[1].get_attribute("textContent").split("\t")[0].split(':')[1]
     
-    kick_off = elements[2].find_elements_by_css_selector('dd')[0].text
-    date = elements[2].find_elements_by_css_selector('dd')[1].text
+    kick_off = elements[2].find_elements(By.CSS_SELECTOR, 'dd')[0].get_attribute("textContent").split("\t")[0]
+    date = elements[2].find_elements(By.CSS_SELECTOR, 'dd')[1].get_attribute("textContent").split("\t")[0]
     
     ########### show data
     driver.get(url_show)
@@ -142,43 +143,43 @@ def crawling_game_results(path, url, api_delay_term=4):
     time.sleep(api_delay_term) 
     
     # get home and away
-    matchup_home_goals = driver.find_elements_by_css_selector('td.previous-meetings-stat')[0].text
-    matchup_away_goals = driver.find_elements_by_css_selector('td.previous-meetings-stat')[3].text
-    matchup_home_wins = driver.find_elements_by_css_selector('span.title')[0].text 
-    matchup_draw = driver.find_elements_by_css_selector('span.title')[1].text 
-    matchup_away_wins = driver.find_elements_by_css_selector('span.title')[2].text 
+    matchup_home_goals = driver.find_elements(By.CSS_SELECTOR, 'td.previous-meetings-stat')[0].get_attribute("textContent").split("\t")[0]
+    matchup_away_goals = driver.find_elements(By.CSS_SELECTOR, 'td.previous-meetings-stat')[3].get_attribute("textContent").split("\t")[0]
+    matchup_home_wins = driver.find_elements(By.CSS_SELECTOR, 'span.title')[0].get_attribute("textContent").split("\t")[0] 
+    matchup_draw = driver.find_elements(By.CSS_SELECTOR, 'span.title')[1].get_attribute("textContent").split("\t")[0] 
+    matchup_away_wins = driver.find_elements(By.CSS_SELECTOR, 'span.title')[2].get_attribute("textContent").split("\t")[0] 
     
     ########### show data
     driver.get(url_matchreport)
     # wait get league team datas
     time.sleep(api_delay_term) 
-    attempt = driver.find_element_by_css_selector('div.stat-group').find_elements_by_css_selector('span.stat-value')
-    home_total_att = attempt[0].find_elements_by_css_selector('span')[0].text
-    away_total_att = attempt[1].find_elements_by_css_selector('span')[0].text
-    home_open_att = attempt[2].find_elements_by_css_selector('span')[0].text
-    away_open_att = attempt[3].find_elements_by_css_selector('span')[0].text
-    home_set_att = attempt[4].find_elements_by_css_selector('span')[0].text
-    away_set_att = attempt[5].find_elements_by_css_selector('span')[0].text
-    home_counter_att = attempt[6].find_elements_by_css_selector('span')[0].text
-    away_counter_att = attempt[7].find_elements_by_css_selector('span')[0].text
-    home_pk_att = attempt[8].find_elements_by_css_selector('span')[0].text
-    away_pk_att = attempt[9].find_elements_by_css_selector('span')[0].text
-    home_own_att = attempt[10].find_elements_by_css_selector('span')[0].text 
-    away_own_att = attempt[11].find_elements_by_css_selector('span')[0].text 
+    attempt = driver.find_element(By.CSS_SELECTOR, 'div.stat-group').find_elements(By.CSS_SELECTOR, 'span.stat-value')
+    home_total_att = attempt[0].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    away_total_att = attempt[1].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    home_open_att = attempt[2].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    away_open_att = attempt[3].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    home_set_att = attempt[4].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    away_set_att = attempt[5].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    home_counter_att = attempt[6].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    away_counter_att = attempt[7].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    home_pk_att = attempt[8].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    away_pk_att = attempt[9].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    home_own_att = attempt[10].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0] 
+    away_own_att = attempt[11].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0] 
     
-    passes = driver.find_element_by_css_selector('#live-chart-stats-options')
-    passes.find_elements_by_css_selector('a')[1].click()
+    passes = driver.find_element(By.CSS_SELECTOR, '#live-chart-stats-options')
+    passes.find_elements(By.CSS_SELECTOR, 'a')[1].click()
     
     time.sleep(2)
-    passes = driver.find_elements_by_css_selector('div.stat-group')[2].find_elements_by_css_selector('span.stat-value')
-    home_total_passes = passes[0].find_elements_by_css_selector('span')[0].text
-    away_total_passes = passes[1].find_elements_by_css_selector('span')[0].text
-    home_crosses_passes = passes[2].find_elements_by_css_selector('span')[0].text
-    away_crosses_passes = passes[3].find_elements_by_css_selector('span')[0].text
-    home_long_balls = passes[6].find_elements_by_css_selector('span')[0].text
-    away_long_balls = passes[7].find_elements_by_css_selector('span')[0].text
-    home_short_passes = passes[8].find_elements_by_css_selector('span')[0].text
-    away_short_passes = passes[9].find_elements_by_css_selector('span')[0].text
+    passes = driver.find_elements(By.CSS_SELECTOR, 'div.stat-group')[2].find_elements(By.CSS_SELECTOR, 'span.stat-value')
+    home_total_passes = passes[0].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    away_total_passes = passes[1].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    home_crosses_passes = passes[2].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    away_crosses_passes = passes[3].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    home_long_balls = passes[6].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    away_long_balls = passes[7].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    home_short_passes = passes[8].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
+    away_short_passes = passes[9].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
     
     
     driver.close()
@@ -456,26 +457,26 @@ def league_table_added(URL, api_delay_term=3):
     
     league_table_df = pd.DataFrame(columns=[
         "team_name", "P", "W", "D", "L", "GF", "GA", "GD", "Pts"])
-    elements = driver.find_elements_by_class_name('standings')[0].find_elements_by_css_selector("tr")
+    elements = driver.find_elements(By.CLASS_NAME, 'standings')[0].find_elements(By.CSS_SELECTOR, "tr")
     
     for element in elements:
         league_table_dict = { 
-            "team_name": element.find_elements_by_css_selector("td")[0].find_elements_by_css_selector("a")[0].text,     
-            "P": element.find_elements_by_css_selector("td")[1].text,
-            "W": element.find_elements_by_css_selector("td")[2].text, 
-            "D": element.find_elements_by_css_selector("td")[3].text,
-            "L": element.find_elements_by_css_selector("td")[4].text, 
-            "GF": element.find_elements_by_css_selector("td")[5].text, 
-            "GA": element.find_elements_by_css_selector("td")[6].text,
-            "GD": element.find_elements_by_css_selector("td")[7].text,
-            "Pts": element.find_elements_by_css_selector("td")[8].text,
+            "team_name": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "a")[0].get_attribute("textContent").split("\t")[0],     
+            "P": element.find_elements(By.CSS_SELECTOR, "td")[1].get_attribute("textContent").split("\t")[0],
+            "W": element.find_elements(By.CSS_SELECTOR, "td")[2].get_attribute("textContent").split("\t")[0], 
+            "D": element.find_elements(By.CSS_SELECTOR, "td")[3].get_attribute("textContent").split("\t")[0],
+            "L": element.find_elements(By.CSS_SELECTOR, "td")[4].get_attribute("textContent").split("\t")[0], 
+            "GF": element.find_elements(By.CSS_SELECTOR, "td")[5].get_attribute("textContent").split("\t")[0], 
+            "GA": element.find_elements(By.CSS_SELECTOR, "td")[6].get_attribute("textContent").split("\t")[0],
+            "GD": element.find_elements(By.CSS_SELECTOR, "td")[7].get_attribute("textContent").split("\t")[0],
+            "Pts": element.find_elements(By.CSS_SELECTOR, "td")[8].get_attribute("textContent").split("\t")[0],
         }
         league_table_df.loc[len(league_table_df)] = league_table_dict
     
     time.sleep(api_delay_term)
     
-    starter = driver.find_elements_by_id("sub-navigation")
-    starter = starter[0].find_elements_by_css_selector("li")[2]
+    starter = driver.find_elements(By.ID, "sub-navigation")
+    starter = starter[0].find_elements(By.CSS_SELECTOR, "li")[2]
     starter.click()
     
     
@@ -483,24 +484,24 @@ def league_table_added(URL, api_delay_term=3):
         "team_name", "Goals", "Shots pg", "Yellow", "Red", "Poss%", "Pass%", 
         "A_Won", "Rating"
     ])
-    elements = driver.find_elements_by_id("top-team-stats-summary-content")
-    elements = elements[0].find_elements_by_css_selector("tr")
+    elements = driver.find_elements(By.ID, "top-team-stats-summary-content")
+    elements = elements[0].find_elements(By.CSS_SELECTOR, "tr")
     
     for element in elements:
         team_table_dict1 = { 
-            "team_name": element.find_elements_by_css_selector("td")[0].find_elements_by_css_selector("a")[0].text.split('. ')[1],     
-            "Goals": element.find_elements_by_css_selector("td")[1].text,
-            "Shots pg": element.find_elements_by_css_selector("td")[2].text, 
-            "Yellow": element.find_elements_by_css_selector("td")[3].find_elements_by_css_selector("span")[0].text, 
-            "Red": element.find_elements_by_css_selector("td")[3].find_elements_by_css_selector("span")[1].text, 
-            "Poss%": element.find_elements_by_css_selector("td")[4].text, 
-            "Pass%": element.find_elements_by_css_selector("td")[5].text,
-            "A_Won": element.find_elements_by_css_selector("td")[6].text,
-            "Rating": element.find_elements_by_css_selector("td")[7].text,
+            "team_name": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "a")[0].get_attribute("textContent").split("\t")[0].split('. ')[1],     
+            "Goals": element.find_elements(By.CSS_SELECTOR, "td")[1].get_attribute("textContent").split("\t")[0],
+            "Shots pg": element.find_elements(By.CSS_SELECTOR, "td")[2].get_attribute("textContent").split("\t")[0], 
+            "Yellow": element.find_elements(By.CSS_SELECTOR, "td")[3].find_elements(By.CSS_SELECTOR, "span")[0].get_attribute("textContent").split("\t")[0], 
+            "Red": element.find_elements(By.CSS_SELECTOR, "td")[3].find_elements(By.CSS_SELECTOR, "span")[1].get_attribute("textContent").split("\t")[0], 
+            "Poss%": element.find_elements(By.CSS_SELECTOR, "td")[4].get_attribute("textContent").split("\t")[0], 
+            "Pass%": element.find_elements(By.CSS_SELECTOR, "td")[5].get_attribute("textContent").split("\t")[0],
+            "A_Won": element.find_elements(By.CSS_SELECTOR, "td")[6].get_attribute("textContent").split("\t")[0],
+            "Rating": element.find_elements(By.CSS_SELECTOR, "td")[7].get_attribute("textContent").split("\t")[0],
         }
         team_stat_df1.loc[len(team_stat_df1)] = team_table_dict1
     
-    element = driver.find_element_by_css_selector("a[href='#stage-team-stats-defensive']")
+    element = driver.find_element(By.CSS_SELECTOR, "a[href='#stage-team-stats-defensive']")
     element.click()
     
     time.sleep(api_delay_term)
@@ -509,22 +510,22 @@ def league_table_added(URL, api_delay_term=3):
     team_stat_df2 = pd.DataFrame(columns=[
         "team_name", "Shoted pg", "Tackles pg", "Intercept pg", "Fouls pg", "Offsides pg"
     ])
-    elements = driver.find_elements_by_id("statistics-team-table-defensive")
-    elements = elements[0].find_elements_by_id("top-team-stats-summary-content")
-    elements = elements[0].find_elements_by_css_selector("tr")
+    elements = driver.find_elements(By.ID, "statistics-team-table-defensive")
+    elements = elements[0].find_elements(By.ID, "top-team-stats-summary-content")
+    elements = elements[0].find_elements(By.CSS_SELECTOR, "tr")
     
     for element in elements:
         team_table_dict2 = { 
-            "team_name": element.find_elements_by_css_selector("td")[0].find_elements_by_css_selector("a")[0].text.split('. ')[1],     
-            'Shoted pg': element.find_elements_by_css_selector("td")[1].text,
-            'Tackles pg': element.find_elements_by_css_selector("td")[2].text,
-            'Intercept pg': element.find_elements_by_css_selector("td")[3].text, 
-            'Fouls pg': element.find_elements_by_css_selector("td")[4].text, 
-            'Offsides pg': element.find_elements_by_css_selector("td")[5].text, 
+            "team_name": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "a")[0].get_attribute("textContent").split("\t")[0].split('. ')[1],     
+            'Shoted pg': element.find_elements(By.CSS_SELECTOR, "td")[1].get_attribute("textContent").split("\t")[0],
+            'Tackles pg': element.find_elements(By.CSS_SELECTOR, "td")[2].get_attribute("textContent").split("\t")[0],
+            'Intercept pg': element.find_elements(By.CSS_SELECTOR, "td")[3].get_attribute("textContent").split("\t")[0], 
+            'Fouls pg': element.find_elements(By.CSS_SELECTOR, "td")[4].get_attribute("textContent").split("\t")[0], 
+            'Offsides pg': element.find_elements(By.CSS_SELECTOR, "td")[5].get_attribute("textContent").split("\t")[0], 
         }
         team_stat_df2.loc[len(team_stat_df2)] = team_table_dict2
     
-    element = driver.find_element_by_css_selector("a[href='#stage-team-stats-offensive']")
+    element = driver.find_element(By.CSS_SELECTOR, "a[href='#stage-team-stats-offensive']")
     element.click()
     
     time.sleep(api_delay_term)
@@ -532,16 +533,16 @@ def league_table_added(URL, api_delay_term=3):
     team_stat_df3 = pd.DataFrame(columns=[
         "team_name", "Shots OT pg", "Dribbles pg", "Fouled pg"
     ])
-    elements = driver.find_elements_by_id("statistics-team-table-offensive")
-    elements = elements[0].find_elements_by_id("top-team-stats-summary-content")
-    elements = elements[0].find_elements_by_css_selector("tr")
+    elements = driver.find_elements(By.ID, "statistics-team-table-offensive")
+    elements = elements[0].find_elements(By.ID, "top-team-stats-summary-content")
+    elements = elements[0].find_elements(By.CSS_SELECTOR, "tr")
     
     for element in elements: 
         team_table_dict3 = { 
-            "team_name": element.find_elements_by_css_selector("td")[0].find_elements_by_css_selector("a")[0].text.split('. ')[1],     
-            'Shots OT pg': element.find_elements_by_css_selector("td")[2].text,
-            'Dribbles pg': element.find_elements_by_css_selector("td")[3].text, 
-            'Fouled pg': element.find_elements_by_css_selector("td")[4].text, 
+            "team_name": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "a")[0].get_attribute("textContent").split("\t")[0].split('. ')[1],     
+            'Shots OT pg': element.find_elements(By.CSS_SELECTOR, "td")[2].get_attribute("textContent").split("\t")[0],
+            'Dribbles pg': element.find_elements(By.CSS_SELECTOR, "td")[3].get_attribute("textContent").split("\t")[0], 
+            'Fouled pg': element.find_elements(By.CSS_SELECTOR, "td")[4].get_attribute("textContent").split("\t")[0], 
         }
         team_stat_df3.loc[len(team_stat_df3)] = team_table_dict3
         
