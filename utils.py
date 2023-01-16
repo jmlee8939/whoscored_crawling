@@ -60,7 +60,7 @@ def crawling_match_url(path, region_number, tournaments_number, season_number, a
     driver.close()
     return list(set(match_link))
 
-def crawling_game_results(path, url, api_delay_term=4):
+def crawling_game_results(path, url, api_delay_term=2):
     """
     crawling results from a match
     
@@ -376,13 +376,13 @@ def crawling_seasons_add(path, season_name, missing_list):
         list of match failed to crwaling 
        
     """
-    file_name = season_name+'_match_number.csv'
+    file_name = season_name+'_match_url.csv'
     file_names = os.listdir(os.getcwd())
     if file_name in file_names:
         match_number = pd.read_csv(file_name)['0']
         print('find '+ file_name + 'done')
     else : 
-        print('there are no match_number.csv file')
+        print('there are no match_url.csv file')
         return()
     
     a = 0
@@ -437,7 +437,7 @@ def crawling_all_matches(path, region, tournament, season_number, season_name):
 
 
 
-def league_table_added(URL, api_delay_term=3):
+def league_table_added(URL, api_delay_term=2):
     """
     crawling league table with additional features
     ex) shot per game, Tackles per game ... etc.
