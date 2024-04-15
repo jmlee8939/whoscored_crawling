@@ -1,4 +1,7 @@
 # Whoscored_crawling
+
+![image](https://github.com/jmlee8939/whoscored_crawling/assets/58785929/e6c074d2-f3d9-4794-9b83-985e5c9ef15a)
+
 by jaeminiman  
 soccer_data_crawling from [whoscored.com](http://whoscored.com)  
 using chrome version -- 109.0.5414.74(64bit)  
