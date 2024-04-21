@@ -4,8 +4,8 @@
 
 by jaeminiman  
 soccer_data_crawling from [whoscored.com](http://whoscored.com)  
-using chrome version -- 109.0.5414.74(64bit)  
-using chromdriver -- ChromeDriver 109.0.5414.74
+using chrome version -- 124.0.6367.62(arm64)  
+using chromdriver -- ChromeDriver 124.0.6367.62
 using seleium -- 4.3.0
 
 a lot of soccer data for various seasons and leagues in this website.
