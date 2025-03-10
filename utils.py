@@ -15,12 +15,11 @@ import os
 import sys
 from tqdm import tqdm
 
-def crawling_match_url(path, region_number, tournaments_number, season_number, api_delay_term=5):
+def crawling_match_url(region_number, tournaments_number, season_number, api_delay_term=5):
     """
     find the all links of matches from a certain league
     
     Args :
-        path : directory which chrome webdriver is in.
         region_number : region number of the league from whoscored
         tournaments_number : tournament number of the league from whoscored
         season_number : season number of the league from whoscored
@@ -34,7 +33,7 @@ def crawling_match_url(path, region_number, tournaments_number, season_number, a
     # activate webdriver
     url = 'https://www.whoscored.com/Regions/'+str(region_number)+'/Tournaments/'
     url = url+str(tournaments_number)+'/Seasons/'+str(season_number)+'/Fixtures'
-    driver = webdriver.Chrome(path)
+    driver = webdriver.Chrome()
     driver.get(url)
 
     # wait get league team datas
@@ -60,13 +59,12 @@ def crawling_match_url(path, region_number, tournaments_number, season_number, a
     driver.close()
     return list(set(match_link))
 
-def crawling_game_results(path, url, api_delay_term=2):
+def crawling_game_results(url, api_delay_term=2):
     """
     crawling results from a match
     
     
     Args :
-        path : directory which chrome webdriver is in.
         url : match url
         api_delay_term : break time
     
@@ -75,7 +73,7 @@ def crawling_game_results(path, url, api_delay_term=2):
 
     """ 
     # activate webdriver
-    driver = webdriver.Chrome(path)
+    driver = webdriver.Chrome()
     
     # wait get league team datas
     time.sleep(api_delay_term) 
@@ -307,7 +305,7 @@ def match_df():
 def test():
     return(os.listdir(os.getcwd()))
 
-def crawling_seasons(path, region, tournament, season_number, season_name):
+def crawling_seasons(region, tournament, season_number, season_name):
     """
     crawling detail match results of all matches from a season.
     save 
@@ -318,7 +316,6 @@ def crawling_seasons(path, region, tournament, season_number, season_name):
             detail results of all matches from a season.
     
     Args :
-        path : directory which chrome webdriver is in.
         region : region number of the league from whoscored
         tournaments : tournament number of the league from whoscored
         season_number : season number of the league from whoscored
@@ -335,7 +332,7 @@ def crawling_seasons(path, region, tournament, season_number, season_name):
         match_url = pd.read_csv(file_name)['0']
         print('find '+ file_name + 'done')
     else : 
-        match_url = crawling_match_url(path,region,tournament,season_number)
+        match_url = crawling_match_url(region,tournament,season_number)
         pd.DataFrame(match_url).to_csv(file_name)
         print(file_name+": done, {} matches".format(len(match_url)))
     
@@ -346,7 +343,7 @@ def crawling_seasons(path, region, tournament, season_number, season_name):
         start_time = time.time()
     
         try :
-            temp_dict = crawling_game_results(path,match,4)
+            temp_dict = crawling_game_results(match,4)
             mat_df.loc[len(mat_df)] = temp_dict
             print('match_url {} : cawling done'.format(len(mat_df)+a))
         except :
@@ -362,13 +359,12 @@ def crawling_seasons(path, region, tournament, season_number, season_name):
     print(error_list)
     return(error_list)   
 
-def crawling_seasons_add(path, season_name, missing_list):
+def crawling_seasons_add(season_name, missing_list):
     """   
         add recrawling match results from missing list to previous dataframe.
         
         
     Args :
-        path : directory which chrome webdriver is in.
         season_name : season name for saving file ex) PL1920 or Serie A 1718 
         missing_list : list of match index which is failed to crwaling
      
@@ -393,7 +389,7 @@ def crawling_seasons_add(path, season_name, missing_list):
         match = match_number.iloc[missing_match_no]
     
         try :
-            temp_dict = crawling_game_results(path, match, 4)
+            temp_dict = crawling_game_results(match, 4)
             mat_df.loc[len(mat_df)] = temp_dict
             print('match_number {} : cawling done'.format(missing_match_no))
         except :
@@ -401,7 +397,7 @@ def crawling_seasons_add(path, season_name, missing_list):
             print('match_number {} : error'.format(missing_match_no))
             
             try :             
-                temp_dict = crawling_game_results(path, match, 4)
+                temp_dict = crawling_game_results(match, 4)
                 mat_df.loc[len(mat_df)] = temp_dict
                 print('match_number {} : crawling done (retry)'.format(missing_match_no))
                 
@@ -416,12 +412,11 @@ def crawling_seasons_add(path, season_name, missing_list):
     print(error_list)    
     return(error_list)   
 
-def crawling_all_matches(path, region, tournament, season_number, season_name):
+def crawling_all_matches(region, tournament, season_number, season_name):
     """
     combine all functions and save all match results from certain seasons
     
     Args :
-        path : directory which chrome webdriver is in.
         region : region number of the league from whoscored
         tournaments : tournament number of the league from whoscored
         season_number : season number of the league from whoscored
@@ -431,8 +426,8 @@ def crawling_all_matches(path, region, tournament, season_number, season_name):
         error list  
     
     """
-    error_lis = crawling_seasons(path, region, tournament, season_number, season_name)
-    result = crawling_seasons_add(path, season_name, error_lis)
+    error_lis = crawling_seasons(region, tournament, season_number, season_name)
+    result = crawling_seasons_add(season_name, error_lis)
     return(result)
 
 
@@ -450,7 +445,7 @@ def league_table_added(URL, api_delay_term=2):
     
     """
     url = str(URL)
-    driver = webdriver.Chrome('./chromedriver')
+    driver = webdriver.Chrome()
     driver.get(url)
     
     time.sleep(api_delay_term)
@@ -555,5 +550,416 @@ def league_table_added(URL, api_delay_term=2):
     driver.close()
     
     return team_stat_df
+
+def crawling_league_teams(region, tournaments, api_delay_term=5):
+
+    """
+    cawling league team_id and team name datas
     
-    return league_table_df
+    Arg :
+        region : region id (from whoscored) for certain league ex) england --- 252, spain --- 206
+        tournaments : tournament(or league) id ex) premier league --- 2,
+    
+    return :
+        crawling league team_id, team_name datas belong team_id parameter
+        return pandas dataframe columns=team_id, team_name
+    
+
+    """
+    
+    # connect webdriver
+    url = "https://1xbet.whoscored.com/Regions/" + str(region) + "/Tournaments/" + str(tournaments)
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver.get(url)
+
+    # wait get league team datas
+    time.sleep(api_delay_term) 
+    
+    # make pandas dataframe
+    team_df = pd.DataFrame(columns=["team_id","team_name"])
+
+    # get team data
+    teams = driver.find_element(By.XPATH, "//*[@id='standings-23400-content']")
+    teams = teams.find_elements(By.CSS_SELECTOR, "a.team-link")
+    
+    for team in teams:
+        team_name = team.get_attribute("innerHTML")
+        team_id = team.get_attribute("href").split("/")[4]
+        team_df.loc[len(team_df)] = {"team_id":team_id, "team_name":team_name }
+        
+    # close webdriver
+    driver.close()
+    
+    return team_df
+
+
+def crawling_player_summary(team_id, api_delay_term=5):
+    """
+    crawling player statistics of certain team
+    
+    Args :
+        team_id : team number 
+        
+    return :
+        player statistics (dataframe)
+    
+    """
+
+    # connect webdriver
+    url = "https://www.whoscored.com/Teams/" + str(team_id)
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver.get(url)
+
+    # wait for getting data
+    time.sleep(api_delay_term)
+    
+    # make pandas dataframe
+    player_summary_df = pd.DataFrame(columns=[
+        "player_number", "name","age","position","tall","weight","games",
+        "mins", "goals", "asists", "yel", "red", "spg", "ps","aw","motm", "rating"
+        ])
+    
+    # get player summay datas
+    elements = driver.find_elements(By.CSS_SELECTOR, "#player-table-statistics-body tr")
+    for element in elements:
+        
+        player_dict = {
+            "player_number": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, ("a"))[0].get_attribute("href").split("/")[4], 
+            "name": element.find_element(By.CSS_SELECTOR, "td > a > span").get_attribute("textContent").split("\t")[0],     
+            "age": element.find_element(By.CSS_SELECTOR, "td > span > span:nth-child(1)").get_attribute("textContent").split("\t")[0],
+            "position": element.find_element(By.CSS_SELECTOR, "td > span > span:nth-child(2)").get_attribute("textContent").split("\t")[0][2:], 
+            "tall": element.find_elements(By.CSS_SELECTOR, ("td"))[2].get_attribute("textContent").split("\t")[0],
+            "weight": element.find_elements(By.CSS_SELECTOR, ("td"))[3].get_attribute("textContent").split("\t")[0], 
+            "games": element.find_elements(By.CSS_SELECTOR, ("td"))[4].get_attribute("textContent").split("\t")[0], 
+            "mins": element.find_elements(By.CSS_SELECTOR, ("td"))[5].get_attribute("textContent").split("\t")[0],
+            "goals": element.find_elements(By.CSS_SELECTOR, ("td"))[6].get_attribute("textContent").split("\t")[0],
+            "asists": element.find_elements(By.CSS_SELECTOR, ("td"))[7].get_attribute("textContent").split("\t")[0],
+            "yel": element.find_elements(By.CSS_SELECTOR, ("td"))[8].get_attribute("textContent").split("\t")[0],
+            "red": element.find_elements(By.CSS_SELECTOR, ("td"))[9].get_attribute("textContent").split("\t")[0],
+            "spg": element.find_elements(By.CSS_SELECTOR, ("td"))[10].get_attribute("textContent").split("\t")[0],
+            "ps": element.find_elements(By.CSS_SELECTOR, ("td"))[11].get_attribute("textContent").split("\t")[0],
+            "aw": element.find_elements(By.CSS_SELECTOR, ("td"))[12].get_attribute("textContent").split("\t")[0],
+            "motm": element.find_elements(By.CSS_SELECTOR, ("td"))[13].get_attribute("textContent").split("\t")[0],
+            "rating": element.find_elements(By.CSS_SELECTOR, ("td"))[14].get_attribute("textContent").split("\t")[0],
+        }
+        
+        player_summary_df.loc[len(player_summary_df)] = player_dict
+        
+    # close webdriver
+    driver.close()
+    player_summary_df.replace("-", "0", inplace=True)
+    return player_summary_df
+
+
+def crawling_player_statistics(URL):
+    """
+    crawling player statistics of certain league and season.
+    
+    Args :
+        URL : player statistics webpage URL
+        
+    return :
+        player statistics (dataframe)
+    
+    """
+    url = str(URL)
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver.get(url)
+    tabs = driver.window_handles
+    
+    time.sleep(3)
+
+    while len(tabs) != 1:
+        driver.switch_to.window(tabs[1])
+        driver.close()
+
+    driver.switch_to.window(tabs[0])
+    time.sleep(3)
+    
+    page = driver.find_elements(By.CSS_SELECTOR, '#statistics-paging-summary > div > dl.listbox.right > dt > b')[0].get_attribute("textContent").split("\\")[0]
+    page = int(page.split('/')[1].split(' ')[0])
+    player_statistics_df = pd.DataFrame(columns=[
+        "player_name", "team_number", "team_name", "Apps", "Mins", "Goals",
+        "Assists", "Yel", "Red", "SpG","PS%", "AerialsWon","MoM","Rating"])
+    
+    with tqdm(total=page, file=sys.stdout) as pbar :
+        for i in range(page):
+            if i != 0:
+                driver.find_element(By.ID, 'next').click()
+                time.sleep(4)
+
+            temp_df = pd.DataFrame(columns=[
+                "player_name", "team_number", "team_name", "Apps", "Mins", "Goals",
+                "Assists", "Yel", "Red", "SpG","PS%", "AerialsWon","MoM","Rating"])
+            elements = driver.find_elements(By.CSS_SELECTOR, "#player-table-statistics-body tr")
+
+            for element in elements:
+                player_statistics_dict = { 
+                    "player_name": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "a")[0].
+                    find_elements(By.CSS_SELECTOR, "span")[0].get_attribute("textContent").split("\t")[0],
+                    "team_number": element.find_elements(By.CSS_SELECTOR, "td")[0].
+                    find_elements(By.CSS_SELECTOR, "a")[1].get_attribute("href").split("/")[4],
+                    "team_name": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, ("a"))[1].find_elements(By.CSS_SELECTOR, "span")[0].get_attribute("textContent").split("\t")[0].split(",")[0],
+                    "Apps": element.find_elements(By.CSS_SELECTOR, "td")[2].get_attribute("textContent").split("\t")[0],
+                    "Mins": element.find_elements(By.CSS_SELECTOR, "td")[3].get_attribute("textContent").split("\t")[0], 
+                    "Goals": element.find_elements(By.CSS_SELECTOR, "td")[4].get_attribute("textContent").split("\t")[0],
+                    "Assists": element.find_elements(By.CSS_SELECTOR, "td")[5].get_attribute("textContent").split("\t")[0], 
+                    "Yel": element.find_elements(By.CSS_SELECTOR, "td")[6].get_attribute("textContent").split("\t")[0], 
+                    "Red": element.find_elements(By.CSS_SELECTOR, "td")[7].get_attribute("textContent").split("\t")[0],
+                    "SpG": element.find_elements(By.CSS_SELECTOR, "td")[8].get_attribute("textContent").split("\t")[0],
+                    "PS%": element.find_elements(By.CSS_SELECTOR, "td")[9].get_attribute("textContent").split("\t")[0],
+                    "AerialsWon": element.find_elements(By.CSS_SELECTOR, "td")[10].get_attribute("textContent").split("\t")[0],
+                    "MoM": element.find_elements(By.CSS_SELECTOR, "td")[11].get_attribute("textContent").split("\t")[0],
+                    "Rating": element.find_elements(By.CSS_SELECTOR, "td")[12].get_attribute("textContent").split("\t")[0],
+                }
+                temp_df.loc[len(temp_df)] = player_statistics_dict
+
+            player_statistics_df = pd.concat([player_statistics_df,temp_df])
+            pbar.update(1)
+            pbar.set_description('page {}'.format(i+1))
+            
+    driver.close()
+    player_statistics_df.replace("-", "0", inplace=True)
+    return(player_statistics_df)
+    
+def crawling_player_statistics_defensive(URL):
+    """
+    crawling player statistics(defensive) of certain league and season.
+    
+    Args :
+        URL : player statistics webpage URL
+        
+    return :
+        player statistics (dataframe)
+    
+    """
+    url = str(URL)
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver.get(url)
+    
+    time.sleep(3)
+
+    driver.find_element(By.ID, 'next').click()
+
+    time.sleep(3)
+
+    driver.find_element(By.ID, 'first').click()
+    
+    time.sleep(3)
+    
+    driver.find_element(By.LINK_TEXT, "Defensive").click()
+    
+    time.sleep(3)
+    page = driver.find_elements(By.CSS_SELECTOR, '#statistics-paging-defensive > div > dl.listbox.right > dt > b')[0].get_attribute("textContent")
+    page = int(page.split('/')[1].split(' ')[0])
+    
+    player_statistics_df = pd.DataFrame(columns=[
+            "player_name", "team_number", "team_name", "age","position", "Apps", "Mins", "Tackles",
+            "Inter", "Fouls", "Offsides", "Clear","Drb", "Blocks","OwnG","Rating"])
+    
+    with tqdm(total=page, file=sys.stdout) as pbar :
+        for i in range(page):
+            if i != 0:
+                driver.find_element(By.LINK_TEXT, 'next').click()
+                time.sleep(4)
+
+            temp_df = pd.DataFrame(columns=[
+                "player_name", "team_number", "team_name", "age","position", "Apps", "Mins", "Tackles",
+                "Inter", "Fouls", "Offsides", "Clear","Drb", "Blocks","OwnG","Rating"])
+
+            elements = driver.find_elements(By.CSS_SELECTOR, "#player-table-statistics-body tr")[10:]
+
+            for element in elements:
+                player_statistics_dict = { 
+                    "player_name": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "a")[0].find_elements(By.CSS_SELECTOR, "span")[0].get_attribute("textContent").split("\t")[0],
+                    "team_number": element.find_elements(By.CSS_SELECTOR, "td")[0].
+                    find_elements(By.CSS_SELECTOR, "a")[1].get_attribute("href").split("/")[4],
+                    "team_name": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "a")[1].find_elements(By.CSS_SELECTOR, "span")[0].get_attribute("textContent").split("\t")[0].split(",")[0],
+                    "age": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "span")[4].get_attribute("textContent").split("\t")[0],
+                    "position": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "span")[5].get_attribute("textContent").split("\t")[0][2:],
+                    "Apps": element.find_elements(By.CSS_SELECTOR, "td")[2].get_attribute("textContent").split("\t")[0],
+                    "Mins": element.find_elements(By.CSS_SELECTOR, "td")[3].get_attribute("textContent").split("\t")[0], 
+                    "Tackles": element.find_elements(By.CSS_SELECTOR, "td")[4].get_attribute("textContent").split("\t")[0],
+                    "Inter": element.find_elements(By.CSS_SELECTOR, "td")[5].get_attribute("textContent").split("\t")[0], 
+                    "Fouls": element.find_elements(By.CSS_SELECTOR, "td")[6].get_attribute("textContent").split("\t")[0], 
+                    "Offsides": element.find_elements(By.CSS_SELECTOR, "td")[7].get_attribute("textContent").split("\t")[0],
+                    "Clear": element.find_elements(By.CSS_SELECTOR, "td")[8].get_attribute("textContent").split("\t")[0],
+                    "Drb": element.find_elements(By.CSS_SELECTOR, "td")[9].get_attribute("textContent").split("\t")[0],
+                    "Blocks": element.find_elements(By.CSS_SELECTOR, "td")[10].get_attribute("textContent").split("\t")[0],
+                    "OwnG": element.find_elements(By.CSS_SELECTOR, "td")[11].get_attribute("textContent").split("\t")[0],
+                    "Rating": element.find_elements(By.CSS_SELECTOR, "td")[12].get_attribute("textContent").split("\t")[0],
+                }
+                temp_df.loc[len(temp_df)] = player_statistics_dict
+
+
+            player_statistics_df = pd.concat([player_statistics_df,temp_df])
+            pbar.update(1)
+            pbar.set_description('page {}'.format(i+1))
+        
+    driver.close()
+    
+    player_statistics_df.replace("-", "0", inplace=True)
+    return(player_statistics_df)
+
+def crawling_player_statistics_offensive(URL):
+    """
+    crawling player statistics(offensive) of certain league and season.
+    
+    Args :
+        URL : player statistics webpage URL
+        
+    return :
+        player statistics (dataframe)
+    
+    """
+    url = str(URL)
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver.get(url)
+    
+    time.sleep(3)
+
+    driver.find_element(By.ID, 'next').click()
+
+    time.sleep(3)
+
+    driver.find_element(By.ID, 'first').click()
+    
+    time.sleep(3)
+    
+    driver.find_element(By.LINK_TEXT, "Offensive").click()
+    
+    time.sleep(3)
+    page = driver.find_elements(By.CSS_SELECTOR, '#statistics-paging-offensive > div > dl.listbox.right > dt > b')[0].get_attribute("textContent").split("\t")[0]
+    page = int(page.split('/')[1].split(' ')[0])
+    
+    player_statistics_df = pd.DataFrame(columns=[
+            "player_name", "team_number", "team_name", "age","position", "Apps", "Mins", "Goals",
+            "Assists", "SpG", "KeyP", "Dribble","Fouled", "Off","Disp","UnsTch","Rating"])
+    
+    with tqdm(total=page, file=sys.stdout) as pbar :
+        for i in range(page):
+            if i != 0:
+                driver.find_element(By.LINK_TEXT, 'next').click()
+                time.sleep(4)
+
+            temp_df = pd.DataFrame(columns=[
+                "player_name", "team_number", "team_name", "age","position", "Apps", "Mins", "Goals",
+                "Assists", "SpG", "KeyP", "Dribble","Fouled", "Off","Disp","UnsTch","Rating"])
+
+            elements = driver.find_elements(By.CSS_SELECTOR, "#player-table-statistics-body tr")[10:]
+
+            for element in elements:
+                player_statistics_dict = { 
+                    "player_name": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "a")[0].
+                    find_elements(By.CSS_SELECTOR, "span")[0].get_attribute("textContent").split("\t")[0],
+                    "team_number": element.find_elements(By.CSS_SELECTOR, "td")[0].
+                    find_elements(By.CSS_SELECTOR, "a")[1].get_attribute("href").split("/")[4],
+                    "team_name": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR,"a")[1].find_elements(By.CSS_SELECTOR, "span")[0].get_attribute("textContent").split("\t")[0].split(",")[0],
+                    "age": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR,"span")[4].get_attribute("textContent").split("\t")[0],
+                    "position": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "span")[5].get_attribute("textContent").split("\t")[0][2:],
+                    "Apps": element.find_elements(By.CSS_SELECTOR, "td")[2].get_attribute("textContent").split("\t")[0],
+                    "Mins": element.find_elements(By.CSS_SELECTOR, "td")[3].get_attribute("textContent").split("\t")[0], 
+                    "Goals": element.find_elements(By.CSS_SELECTOR, "td")[4].get_attribute("textContent").split("\t")[0],
+                    "Assists": element.find_elements(By.CSS_SELECTOR, "td")[5].get_attribute("textContent").split("\t")[0], 
+                    "SpG": element.find_elements(By.CSS_SELECTOR, "td")[6].get_attribute("textContent").split("\t")[0], 
+                    "KeyP": element.find_elements(By.CSS_SELECTOR, "td")[7].get_attribute("textContent").split("\t")[0],
+                    "Dribble": element.find_elements(By.CSS_SELECTOR, "td")[8].get_attribute("textContent").split("\t")[0],
+                    "Fouled": element.find_elements(By.CSS_SELECTOR, "td")[9].get_attribute("textContent").split("\t")[0],
+                    "Off": element.find_elements(By.CSS_SELECTOR, "td")[10].get_attribute("textContent").split("\t")[0],
+                    "Disp": element.find_elements(By.CSS_SELECTOR, "td")[11].get_attribute("textContent").split("\t")[0],
+                    "UnsTch": element.find_elements(By.CSS_SELECTOR, "td")[12].get_attribute("textContent").split("\t")[0],
+                    "Rating": element.find_elements(By.CSS_SELECTOR, "td")[13].get_attribute("textContent").split("\t")[0],
+                }
+                temp_df.loc[len(temp_df)] = player_statistics_dict
+
+
+            player_statistics_df = pd.concat([player_statistics_df,temp_df])
+            pbar.update(1)
+            pbar.set_description('page {}'.format(i+1))
+        
+    driver.close()
+
+    player_statistics_df.replace("-", "0", inplace=True)
+    return(player_statistics_df)
+
+def crawling_player_statistics_passing(URL):
+    url = str(URL)
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver.get(url)
+    
+    time.sleep(3)
+
+    driver.find_element(By.ID, 'next').click()
+
+    time.sleep(3)
+
+    driver.find_element(By.ID, 'first').click()
+    
+    time.sleep(3)
+    
+    driver.find_element(By.LINK_TEXT, "Passing").click()
+    
+    time.sleep(3)
+    page = driver.find_elements(By.CSS_SELECTOR, '#statistics-paging-passing > div > dl.listbox.right > dt > b')[0].get_attribute("textContent")
+    page = int(page.split('/')[1].split(' ')[0])
+    
+    player_statistics_df = pd.DataFrame(columns=[
+            "player_name", "team_number", "team_name", "age","position", "Apps", "Mins", "Assists",
+            "KeyP", "AvgP","PS%", "Crosses","LongB","ThrB","Rating"])
+    
+    with tqdm(total=page, file=sys.stdout) as pbar :
+        for i in range(page):
+            if i != 0:
+                driver.find_element(By.LINK_TEXT, 'next').click()
+                time.sleep(4)
+
+            temp_df = pd.DataFrame(columns=[
+                "player_name", "team_number", "team_name", "age","position", "Apps", "Mins","Assists",
+                "KeyP", "AvgP","PS%", "Crosses","LongB","ThrB","Rating"])
+
+            elements = driver.find_elements(By.CSS_SELECTOR, "#player-table-statistics-body tr")[10:]
+
+            for element in elements:
+                player_statistics_dict = { 
+                    "player_name": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "a")[0].
+                    find_elements(By.CSS_SELECTOR, "span")[0].get_attribute("textContent").split("\t")[0],
+                    "team_number": element.find_elements(By.CSS_SELECTOR, "td")[0].
+                    find_elements(By.CSS_SELECTOR, "a")[1].get_attribute("href").split("/")[4],
+                    "team_name": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "a")[1].find_elements(By.CSS_SELECTOR, "span")[0].get_attribute("textContent").split("\t")[0].split(",")[0],
+                    "age": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "span")[4].get_attribute("textContent").split("\t")[0],
+                    "position": element.find_elements(By.CSS_SELECTOR, "td")[0].find_elements(By.CSS_SELECTOR, "span")[5].get_attribute("textContent").split("\t")[0][2:],
+                    "Apps": element.find_elements(By.CSS_SELECTOR, "td")[2].get_attribute("textContent").split("\t")[0],
+                    "Mins": element.find_elements(By.CSS_SELECTOR, "td")[3].get_attribute("textContent").split("\t")[0], 
+                    "Assists": element.find_elements(By.CSS_SELECTOR, "td")[4].get_attribute("textContent").split("\t")[0],
+                    "KeyP": element.find_elements(By.CSS_SELECTOR, "td")[5].get_attribute("textContent").split("\t")[0], 
+                    "AvgP": element.find_elements(By.CSS_SELECTOR, "td")[6].get_attribute("textContent").split("\t")[0], 
+                    "PS%": element.find_elements(By.CSS_SELECTOR, "td")[7].get_attribute("textContent").split("\t")[0],
+                    "Crosses": element.find_elements(By.CSS_SELECTOR, "td")[8].get_attribute("textContent").split("\t")[0],
+                    "LongB": element.find_elements(By.CSS_SELECTOR, "td")[9].get_attribute("textContent").split("\t")[0],
+                    "ThrB": element.find_elements(By.CSS_SELECTOR, "td")[10].get_attribute("textContent").split("\t")[0],
+                    "Rating": element.find_elements(By.CSS_SELECTOR, "td")[11].get_attribute("textContent").split("\t")[0],
+                }
+                temp_df.loc[len(temp_df)] = player_statistics_dict
+
+
+            player_statistics_df = pd.concat([player_statistics_df,temp_df])
+            pbar.update(1)
+            pbar.set_description('page {}'.format(i+1))
+        
+    driver.close()
+    player_statistics_df.replace("-", "0", inplace=True)
+
+    return(player_statistics_df)
+
+def crwaling_player_stats_at_once(URL):
+    stats_summary = crawling_player_statistics(URL)
+    print('player stats summary : done')
+    stats_defensive = crawling_player_statistics_defensive(URL)
+    print('player stats defensive : done')
+    stats_offensive = crawling_player_statistics_offensive(URL)
+    print('player stats offensive : done')
+    stats_passing = crawling_player_statistics_passing(URL)
+    print('player stats pasing : done')
+    player_stats = pd.merge(pd.merge(stats_passing, stats_summary), 
+                            pd.merge(stats_offensive, stats_defensive))
+    return(player_stats)
