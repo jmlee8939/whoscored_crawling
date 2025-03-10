@@ -5,7 +5,7 @@ import time
 parser = argparse.ArgumentParser(description='Whoscored crawling by jaeminiman')
 
 parser.add_argument('--type', required=True, help='type of crawling data -- seasonal team data: 1, seasonal player data: 2, match result data: 3')
-parser.add_argument('--path', required=False, default='.', help='directory of cromedriver')
+parser.add_argument('--path', required=False, default='.', help='directory for saving data')
 parser.add_argument('--league', required=True, help='One of for leagues (PL, LIGA, SA, BL)')
 parser.add_argument('--season', required=True, help='a number of season')
 parser.add_argument('--filename', required=True, help='a name of saved data file')
