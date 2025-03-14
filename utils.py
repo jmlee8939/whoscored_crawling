@@ -2,18 +2,19 @@
 # coding: utf-8
 
 # In[1]:
-
-
 import time
-import pandas as pd
 import time
 import pickle
-import numpy as np
-from selenium import webdriver
-from selenium.webdriver.common.by import By
 import os
 import sys
+import pandas as pd
+import numpy as np
 from tqdm import tqdm
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
+
 
 def crawling_match_url(region_number, tournaments_number, season_number, api_delay_term=5):
     """
@@ -33,8 +34,11 @@ def crawling_match_url(region_number, tournaments_number, season_number, api_del
     # activate webdriver
     url = 'https://www.whoscored.com/Regions/'+str(region_number)+'/Tournaments/'
     url = url+str(tournaments_number)+'/Seasons/'+str(season_number)+'/Fixtures'
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
     driver.get(url)
+
+    close_pop_up(driver)
+    time.sleep(1)
 
     # wait get league team datas
     match_link= []
@@ -73,10 +77,14 @@ def crawling_game_results(url, api_delay_term=2):
 
     """ 
     # activate webdriver
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
     
     # wait get league team datas
     time.sleep(api_delay_term) 
+
+    # close pop up
+    close_pop_up(driver)
+    time.sleep(1)
     
     url_preview = url.replace('Live','Preview')
     url_show = url.replace('Live','Show')
@@ -445,10 +453,12 @@ def league_table_added(URL, api_delay_term=2):
     
     """
     url = str(URL)
-    driver = webdriver.Chrome()
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
     driver.get(url)
     
     time.sleep(api_delay_term)
+    close_pop_up(driver)
+    time.sleep(1)
     
     league_table_df = pd.DataFrame(columns=[
         "team_name", "P", "W", "D", "L", "GF", "GA", "GD", "Pts"])
@@ -574,6 +584,10 @@ def crawling_league_teams(region, tournaments, api_delay_term=5):
 
     # wait get league team datas
     time.sleep(api_delay_term) 
+
+    # close pop up
+    close_pop_up(driver)
+    time.sleep(1)
     
     # make pandas dataframe
     team_df = pd.DataFrame(columns=["team_id","team_name"])
@@ -609,6 +623,9 @@ def crawling_player_summary(team_id, api_delay_term=5):
     url = "https://www.whoscored.com/Teams/" + str(team_id)
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
     driver.get(url)
+
+    close_pop_up(driver)
+    time.sleep(1)
 
     # wait for getting data
     time.sleep(api_delay_term)
@@ -675,6 +692,9 @@ def crawling_player_statistics(URL):
 
     driver.switch_to.window(tabs[0])
     time.sleep(3)
+
+    close_pop_up(driver)
+    time.sleep(1)
     
     page = driver.find_elements(By.CSS_SELECTOR, '#statistics-paging-summary > div > dl.listbox.right > dt > b')[0].get_attribute("textContent").split("\\")[0]
     page = int(page.split('/')[1].split(' ')[0])
@@ -738,6 +758,8 @@ def crawling_player_statistics_defensive(URL):
     driver.get(url)
     
     time.sleep(3)
+    close_pop_up(driver)
+    time.sleep(1)
 
     driver.find_element(By.ID, 'next').click()
 
@@ -817,6 +839,8 @@ def crawling_player_statistics_offensive(URL):
     driver.get(url)
     
     time.sleep(3)
+    close_pop_up(driver)
+    time.sleep(1)
 
     driver.find_element(By.ID, 'next').click()
 
@@ -888,6 +912,8 @@ def crawling_player_statistics_passing(URL):
     driver.get(url)
     
     time.sleep(3)
+    close_pop_up(driver)
+    time.sleep(1)
 
     driver.find_element(By.ID, 'next').click()
 
@@ -963,3 +989,19 @@ def crwaling_player_stats_at_once(URL):
     player_stats = pd.merge(pd.merge(stats_passing, stats_summary), 
                             pd.merge(stats_offensive, stats_defensive))
     return(player_stats)
+
+def close_pop_up(driver):
+    """
+    close pop-up window
+    
+    Args :
+        driver : webdriver
+    
+    return :
+        None
+    
+    """
+    try:
+        driver.find_elements(By.CLASS_NAME, 'webpush-swal2-close')[0].click()
+    except:
+        pass
