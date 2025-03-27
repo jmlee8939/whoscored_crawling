@@ -45,13 +45,13 @@ def crawling_match_url(region_number, tournaments_number, season_number, api_del
     with tqdm(total=40, file=sys.stdout) as pbar :
         for i in range(40):
             time.sleep(api_delay_term)
-            elements = driver.find_elements(By.CSS_SELECTOR, 'a.result-1.rc')
+            elements = driver.find_elements(By.XPATH, "//*[starts-with(@id, 'scoresBtn')]")
             for element in elements:
                 match_link.append(element.get_attribute('href'))
 
             # click
             try : 
-                a = driver.find_element(By.CSS_SELECTOR, 'a.previous.button.ui-state-default.rc-l.is-default')
+                a = driver.find_element(By.ID, "dayChangeBtn-prev")
                 a.click()
             except : 
                 break
