@@ -16,53 +16,6 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-def crawling_match_url(region_number, tournaments_number, season_number, api_delay_term=5):
-    """
-    find the all links of matches from a certain league
-    
-    Args :
-        region_number : region number of the league from whoscored
-        tournaments_number : tournament number of the league from whoscored
-        season_number : season number of the league from whoscored
-        api_delay_term : break time
-    
-    Returns : 
-        list of all the match index(link)  
-
-    """ 
-    
-    # activate webdriver
-    url = 'https://www.whoscored.com/Regions/'+str(region_number)+'/Tournaments/'
-    url = url+str(tournaments_number)+'/Seasons/'+str(season_number)+'/Fixtures'
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
-    driver.get(url)
-
-    close_pop_up(driver)
-    time.sleep(1)
-
-    # wait get league team datas
-    match_link= []
-    with tqdm(total=40, file=sys.stdout) as pbar :
-        for i in range(40):
-            time.sleep(api_delay_term)
-            elements = driver.find_elements(By.XPATH, "//*[starts-with(@id, 'scoresBtn')]")
-            for element in elements:
-                match_link.append(element.get_attribute('href'))
-
-            # click
-            try : 
-                a = driver.find_element(By.ID, "dayChangeBtn-prev")
-                a.click()
-            except : 
-                break
-
-            time.sleep(2)
-            pbar.update(1)
-            pbar.set_description('page {}'.format(i+1))
-    
-    driver.close()
-    return list(set(match_link))
-
 def crawling_game_results(url, api_delay_term=2):
     """
     crawling results from a match
@@ -86,9 +39,9 @@ def crawling_game_results(url, api_delay_term=2):
     close_pop_up(driver)
     time.sleep(1)
     
-    url_preview = url.replace('Live','Preview')
-    url_show = url.replace('Live','Show')
-    url_matchreport = url.replace('Live','MatchReport')
+    url_preview = url.replace('live','preview')
+    url_show = url.replace('live','show')
+    url_matchreport = url.replace('live','matchreport')
     
     driver.get(url)
     match_log = driver.find_element(By.CSS_SELECTOR, 'div.match-centre-stats').find_elements(By.CSS_SELECTOR, 'span.match-centre-stat-value')
@@ -131,8 +84,8 @@ def crawling_game_results(url, api_delay_term=2):
         except : continue
     away_missing_player_rating = round(np.mean(np.array(away_missing_player_rating)),2)
     
-    home = driver.find_element(By.CSS_SELECTOR, 'span.col12-lg-4.col12-m-4.col12-s-0.col12-xs-0.home.team').get_attribute("textContent").split("\t")[0]
-    away = driver.find_element(By.CSS_SELECTOR, 'span.col12-lg-4.col12-m-4.col12-s-0.col12-xs-0.away.team').get_attribute("textContent").split("\t")[0]
+    home = driver.find_element(By.XPATH, '//*[@id="match-header"]/div/div[1]/span[2]/a').get_attribute("textContent").split("\t")[0]
+    away = driver.find_element(By.XPATH, '//*[@id="match-header"]/div/div[1]/span[6]/a').get_attribute("textContent").split("\t")[0]
     elements = driver.find_elements(By.CSS_SELECTOR, 'div.info-block.cleared')
     score = elements[1]
     half_home_score = score.find_elements(By.CSS_SELECTOR, 'dd')[0].get_attribute("textContent").split("\t")[0].split(':')[0]
@@ -189,66 +142,7 @@ def crawling_game_results(url, api_delay_term=2):
     
     
     driver.close()
-    
-    
-    # close webdriver
-    game_dict = {
-        'home_shot' : home_shot,
-        'away_shot' : away_shot,
-        'home_possession' : home_possession,
-        'away_possession' : away_possession, 
-        'home_pass_success' : home_pass_success, 
-        'away_pass_success' : away_pass_success,
-        'home_dribbles' : home_dribbles,
-        'away_dribbles' : away_dribbles,
-        'home_aerials_won' : home_aerials_won,
-        'away_aerials_won' : away_aerials_won,
-        'home_tackles' : home_tackles,
-        'away_tackles' : away_tackles,
-        'home_corners' : home_corners,
-        'away_corners' : away_corners,
-        'home_dispossessed' : home_dispossessed,
-        'away_dispossessed' : away_dispossessed,
-        'home_missing_player' : home_missing_player,
-        'away_missing_player' : away_missing_player,
-        "home_missing_player_rating": home_missing_player_rating, 
-        "away_missing_player_rating": away_missing_player_rating, 
-        "home": home,
-        "away": away,
-        'half_home_score': half_home_score,
-        'half_away_score': half_away_score,
-        'full_home_score': full_home_score,
-        'full_away_score': full_away_score,
-        'kick_off': kick_off,
-        'date' : date,
-        'matchup_home_goals' : matchup_home_goals,
-        'matchup_away_goals' : matchup_away_goals,
-        'matchup_home_wins' : matchup_home_wins,
-        'matchup_draw': matchup_draw,
-        'matchup_away_wins': matchup_away_wins,
-        'home_total_att' : home_total_att,
-        'away_total_att' : away_total_att,
-        'home_open_att' : home_open_att,
-        'away_open_att' : away_open_att,
-        'home_set_att' : home_set_att,
-        'away_set_att' : away_set_att,
-        'home_counter_att' : home_counter_att,
-        'away_counter_att' : away_counter_att,
-        'home_pk_att' : home_pk_att,
-        'away_pk_att' : away_pk_att,
-        'home_own_att' : home_own_att,
-        'away_own_att' : away_own_att,
-        'home_total_passes' : home_total_passes,
-        'away_total_passes' : away_total_passes,
-        'home_crosses_passes' : home_crosses_passes,
-        'away_crosses_passes' : away_crosses_passes,
-        'home_long_balls' : home_long_balls,
-        'away_long_balls' : away_long_balls,
-        'home_short_passes' : home_short_passes,
-        'away_short_passes' : away_short_passes
-        }
-    
-    return game_dict
+
 
 def match_df():
     """
