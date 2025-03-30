@@ -16,6 +16,53 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 
 
+def crawling_match_url(region_number, tournaments_number, season_number, api_delay_term=5):
+    """
+    find the all links of matches from a certain league
+    
+    Args :
+        region_number : region number of the league from whoscored
+        tournaments_number : tournament number of the league from whoscored
+        season_number : season number of the league from whoscored
+        api_delay_term : break time
+    
+    Returns : 
+        list of all the match index(link)  
+
+    """ 
+    
+    # activate webdriver
+    url = 'https://www.whoscored.com/Regions/'+str(region_number)+'/Tournaments/'
+    url = url+str(tournaments_number)+'/Seasons/'+str(season_number)+'/Fixtures'
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver.get(url)
+
+    close_pop_up(driver)
+    time.sleep(1)
+
+    # wait get league team datas
+    match_link= []
+    with tqdm(total=40, file=sys.stdout) as pbar :
+        for i in range(40):
+            time.sleep(api_delay_term)
+            elements = driver.find_elements(By.XPATH, "//*[starts-with(@id, 'scoresBtn')]")
+            for element in elements:
+                match_link.append(element.get_attribute('href'))
+
+            # click
+            try : 
+                a = driver.find_element(By.ID, "dayChangeBtn-prev")
+                a.click()
+            except : 
+                break
+
+            time.sleep(2)
+            pbar.update(1)
+            pbar.set_description('page {}'.format(i+1))
+    
+    driver.close()
+    return list(set(match_link))
+
 def crawling_game_results(url, api_delay_term=2):
     """
     crawling results from a match
