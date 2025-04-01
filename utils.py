@@ -63,6 +63,7 @@ def crawling_match_url(region_number, tournaments_number, season_number, api_del
     driver.close()
     return list(set(match_link))
 
+
 def crawling_game_results(url, api_delay_term=2):
     """
     crawling results from a match
@@ -121,6 +122,7 @@ def crawling_game_results(url, api_delay_term=2):
         except : continue
     home_missing_player_rating = round(np.mean(np.array(home_missing_player_rating)),2)
     
+    
 
     missing_players_away = driver.find_element(By.CSS_SELECTOR, 'div.col12-lg-6.col12-m-6.col12-s-6.col12-xs-12.away.small-display-off')
     ratings = missing_players_away.find_elements(By.CSS_SELECTOR, 'td.rating')
@@ -130,7 +132,7 @@ def crawling_game_results(url, api_delay_term=2):
         try : away_missing_player_rating.append(float(rating.get_attribute("textContent").split("\t")[0]))
         except : continue
     away_missing_player_rating = round(np.mean(np.array(away_missing_player_rating)),2)
-    
+
     home = driver.find_element(By.XPATH, '//*[@id="match-header"]/div/div[1]/span[2]/a').get_attribute("textContent").split("\t")[0]
     away = driver.find_element(By.XPATH, '//*[@id="match-header"]/div/div[1]/span[6]/a').get_attribute("textContent").split("\t")[0]
     elements = driver.find_elements(By.CSS_SELECTOR, 'div.info-block.cleared')
@@ -142,7 +144,7 @@ def crawling_game_results(url, api_delay_term=2):
     
     kick_off = elements[2].find_elements(By.CSS_SELECTOR, 'dd')[0].get_attribute("textContent").split("\t")[0]
     date = elements[2].find_elements(By.CSS_SELECTOR, 'dd')[1].get_attribute("textContent").split("\t")[0]
-    
+   
     ########### show data
     driver.get(url_show)
     # wait get league team datas
@@ -175,7 +177,7 @@ def crawling_game_results(url, api_delay_term=2):
     
     passes = driver.find_element(By.CSS_SELECTOR, '#live-chart-stats-options')
     passes.find_elements(By.CSS_SELECTOR, 'a')[1].click()
-    
+
     time.sleep(2)
     passes = driver.find_elements(By.CSS_SELECTOR, 'div.stat-group')[2].find_elements(By.CSS_SELECTOR, 'span.stat-value')
     home_total_passes = passes[0].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
@@ -186,9 +188,68 @@ def crawling_game_results(url, api_delay_term=2):
     away_long_balls = passes[7].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
     home_short_passes = passes[8].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
     away_short_passes = passes[9].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
-    
-    
+
     driver.close()
+    
+    
+    # close webdriver
+    game_dict = {
+        'home_shot' : home_shot,
+        'away_shot' : away_shot,
+        'home_possession' : home_possession,
+        'away_possession' : away_possession, 
+        'home_pass_success' : home_pass_success, 
+        'away_pass_success' : away_pass_success,
+        'home_dribbles' : home_dribbles,
+        'away_dribbles' : away_dribbles,
+        'home_aerials_won' : home_aerials_won,
+        'away_aerials_won' : away_aerials_won,
+        'home_tackles' : home_tackles,
+        'away_tackles' : away_tackles,
+        'home_corners' : home_corners,
+        'away_corners' : away_corners,
+        'home_dispossessed' : home_dispossessed,
+        'away_dispossessed' : away_dispossessed,
+        'home_missing_player' : home_missing_player,
+        'away_missing_player' : away_missing_player,
+        "home_missing_player_rating": home_missing_player_rating, 
+        "away_missing_player_rating": away_missing_player_rating, 
+        "home": home,
+        "away": away,
+        'half_home_score': half_home_score,
+        'half_away_score': half_away_score,
+        'full_home_score': full_home_score,
+        'full_away_score': full_away_score,
+        'kick_off': kick_off,
+        'date' : date,
+        'matchup_home_goals' : matchup_home_goals,
+        'matchup_away_goals' : matchup_away_goals,
+        'matchup_home_wins' : matchup_home_wins,
+        'matchup_draw': matchup_draw,
+        'matchup_away_wins': matchup_away_wins,
+        'home_total_att' : home_total_att,
+        'away_total_att' : away_total_att,
+        'home_open_att' : home_open_att,
+        'away_open_att' : away_open_att,
+        'home_set_att' : home_set_att,
+        'away_set_att' : away_set_att,
+        'home_counter_att' : home_counter_att,
+        'away_counter_att' : away_counter_att,
+        'home_pk_att' : home_pk_att,
+        'away_pk_att' : away_pk_att,
+        'home_own_att' : home_own_att,
+        'away_own_att' : away_own_att,
+        'home_total_passes' : home_total_passes,
+        'away_total_passes' : away_total_passes,
+        'home_crosses_passes' : home_crosses_passes,
+        'away_crosses_passes' : away_crosses_passes,
+        'home_long_balls' : home_long_balls,
+        'away_long_balls' : away_long_balls,
+        'home_short_passes' : home_short_passes,
+        'away_short_passes' : away_short_passes
+        }
+    
+    return game_dict
 
 
 def match_df():
@@ -251,9 +312,6 @@ def match_df():
         'away_short_passes'])
     return match_df
 
-def test():
-    return(os.listdir(os.getcwd()))
-
 def crawling_seasons(region, tournament, season_number, season_name):
     """
     crawling detail match results of all matches from a season.
@@ -294,7 +352,7 @@ def crawling_seasons(region, tournament, season_number, season_name):
         try :
             temp_dict = crawling_game_results(match,4)
             mat_df.loc[len(mat_df)] = temp_dict
-            print('match_url {} : cawling done'.format(len(mat_df)+a))
+            print('match_url {} : crawling done'.format(len(mat_df)+a))
         except :
             error_list.append(len(mat_df)+a)
             print('match_url {} : error'.format(len(mat_df)+a))
