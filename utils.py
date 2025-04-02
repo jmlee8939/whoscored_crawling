@@ -334,7 +334,7 @@ def crawling_seasons(region, tournament, season_number, season_name):
     """
     
     file_name = season_name+'_match_url.csv'
-    file_names = test()
+    file_names = os.listdir(os.getcwd())
     if file_name in file_names:
         match_url = pd.read_csv(file_name)['0']
         print('find '+ file_name + 'done')
