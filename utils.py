@@ -87,6 +87,7 @@ def crawling_game_results(url, api_delay_term=2):
     close_pop_up(driver)
     time.sleep(1)
     
+    url = url.replace('show','live')
     url_preview = url.replace('live','preview')
     url_show = url.replace('live','show')
     url_matchreport = url.replace('live','matchreport')
