@@ -12,11 +12,19 @@ import numpy as np
 from tqdm import tqdm
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service as ChromeService
-from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options as ChromeOptions
 
 
-def crawling_match_url(region_number, tournaments_number, season_number, api_delay_term=5):
+def _create_driver():
+    """pageLoadStrategy=eager + timeout 설정된 Chrome 드라이버 생성."""
+    opts = ChromeOptions()
+    opts.page_load_strategy = "eager"  # DOM 준비되면 바로 반환 (광고/이미지 대기 안함)
+    driver = webdriver.Chrome(options=opts)
+    driver.set_page_load_timeout(30)  # 30초 넘으면 타임아웃
+    return driver
+
+
+def crawling_match_url(region_number, tournaments_number, season_number, api_delay_term=2):
     """
     find the all links of matches from a certain league
     
@@ -34,11 +42,11 @@ def crawling_match_url(region_number, tournaments_number, season_number, api_del
     # activate webdriver
     url = 'https://www.whoscored.com/Regions/'+str(region_number)+'/Tournaments/'
     url = url+str(tournaments_number)+'/Seasons/'+str(season_number)+'/Fixtures'
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver = _create_driver()
     driver.get(url)
 
+    time.sleep(api_delay_term)
     close_pop_up(driver)
-    time.sleep(1)
 
     # wait get league team datas
     match_link= []
@@ -50,9 +58,10 @@ def crawling_match_url(region_number, tournaments_number, season_number, api_del
                 match_link.append(element.get_attribute('href'))
 
             # click
-            try : 
+            close_pop_up(driver)
+            try :
                 a = driver.find_element(By.ID, "dayChangeBtn-prev")
-                a.click()
+                driver.execute_script("arguments[0].click();", a)
             except : 
                 break
 
@@ -78,7 +87,7 @@ def crawling_game_results(url, api_delay_term=2):
 
     """ 
     # activate webdriver
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver = _create_driver()
     
     # wait get league team datas
     time.sleep(api_delay_term) 
@@ -93,6 +102,8 @@ def crawling_game_results(url, api_delay_term=2):
     url_matchreport = url.replace('live','matchreport')
     
     driver.get(url)
+    time.sleep(api_delay_term)
+    close_pop_up(driver)
     match_log = driver.find_element(By.CSS_SELECTOR, 'div.match-centre-stats').find_elements(By.CSS_SELECTOR, 'span.match-centre-stat-value')
     home_shot = match_log[2].get_attribute("textContent").split("\t")[0]
     away_shot = match_log[3].get_attribute("textContent").split("\t")[0]
@@ -113,6 +124,7 @@ def crawling_game_results(url, api_delay_term=2):
     
     driver.get(url_preview)
     time.sleep(api_delay_term)
+    close_pop_up(driver)
     # get home and away
     missing_players_home = driver.find_element(By.CSS_SELECTOR, 'div.col12-lg-6.col12-m-6.col12-s-6.col12-xs-12.home.small-display-on')
     ratings = missing_players_home.find_elements(By.CSS_SELECTOR, 'td.rating')
@@ -149,8 +161,9 @@ def crawling_game_results(url, api_delay_term=2):
     ########### show data
     driver.get(url_show)
     # wait get league team datas
-    time.sleep(api_delay_term) 
-    
+    time.sleep(api_delay_term)
+    close_pop_up(driver)
+
     # get home and away
     matchup_home_goals = driver.find_elements(By.CSS_SELECTOR, 'td.previous-meetings-stat')[0].get_attribute("textContent").split("\t")[0]
     matchup_away_goals = driver.find_elements(By.CSS_SELECTOR, 'td.previous-meetings-stat')[3].get_attribute("textContent").split("\t")[0]
@@ -161,7 +174,8 @@ def crawling_game_results(url, api_delay_term=2):
     ########### show data
     driver.get(url_matchreport)
     # wait get league team datas
-    time.sleep(api_delay_term) 
+    time.sleep(api_delay_term)
+    close_pop_up(driver)
     attempt = driver.find_element(By.CSS_SELECTOR, 'div.stat-group').find_elements(By.CSS_SELECTOR, 'span.stat-value')
     home_total_att = attempt[0].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
     away_total_att = attempt[1].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0]
@@ -176,8 +190,10 @@ def crawling_game_results(url, api_delay_term=2):
     home_own_att = attempt[10].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0] 
     away_own_att = attempt[11].find_elements(By.CSS_SELECTOR, 'span')[0].get_attribute("textContent").split("\t")[0] 
     
+    close_pop_up(driver)
     passes = driver.find_element(By.CSS_SELECTOR, '#live-chart-stats-options')
-    passes.find_elements(By.CSS_SELECTOR, 'a')[1].click()
+    passes_link = passes.find_elements(By.CSS_SELECTOR, 'a')[1]
+    driver.execute_script("arguments[0].click();", passes_link)
 
     time.sleep(2)
     passes = driver.find_elements(By.CSS_SELECTOR, 'div.stat-group')[2].find_elements(By.CSS_SELECTOR, 'span.stat-value')
@@ -351,7 +367,7 @@ def crawling_seasons(region, tournament, season_number, season_name):
         start_time = time.time()
     
         try :
-            temp_dict = crawling_game_results(match,4)
+            temp_dict = crawling_game_results(match,2)
             mat_df.loc[len(mat_df)] = temp_dict
             print('match_url {} : crawling done'.format(len(mat_df)+a))
         except :
@@ -361,7 +377,7 @@ def crawling_seasons(region, tournament, season_number, season_name):
             continue
         if len(mat_df)%10 ==0:
             mat_df.to_csv(season_name+'_match.csv')
-            time.sleep(4) 
+            time.sleep(2) 
         # print(time.time()-start_time)
     mat_df.to_csv(season_name+'_match.csv')
     print(error_list)
@@ -397,7 +413,7 @@ def crawling_seasons_add(season_name, missing_list):
         match = match_number.iloc[missing_match_no]
     
         try :
-            temp_dict = crawling_game_results(match, 4)
+            temp_dict = crawling_game_results(match, 2)
             mat_df.loc[len(mat_df)] = temp_dict
             print('match_number {} : cawling done'.format(missing_match_no))
         except :
@@ -405,7 +421,7 @@ def crawling_seasons_add(season_name, missing_list):
             print('match_number {} : error'.format(missing_match_no))
             
             try :             
-                temp_dict = crawling_game_results(match, 4)
+                temp_dict = crawling_game_results(match, 2)
                 mat_df.loc[len(mat_df)] = temp_dict
                 print('match_number {} : crawling done (retry)'.format(missing_match_no))
                 
@@ -415,7 +431,7 @@ def crawling_seasons_add(season_name, missing_list):
             
         if len(mat_df)%10 ==0:
             mat_df.to_csv(season_name+'_add_match.csv')
-            time.sleep(4) 
+            time.sleep(2) 
     mat_df.to_csv(season_name+'_add_match.csv')
     print(error_list)    
     return(error_list)   
@@ -453,7 +469,7 @@ def league_table_added(URL, api_delay_term=2):
     
     """
     url = str(URL)
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver = _create_driver()
     driver.get(url)
     
     time.sleep(api_delay_term)
@@ -479,12 +495,11 @@ def league_table_added(URL, api_delay_term=2):
         league_table_df.loc[len(league_table_df)] = league_table_dict
     
     time.sleep(api_delay_term)
+    close_pop_up(driver)
+    starter = driver.find_elements(By.XPATH, "//*[@id='sub-navigation']/ul/li[3]/a")[0]
+    driver.execute_script("arguments[0].click();", starter)
     
-    starter = driver.find_elements(By.ID, "sub-navigation")
-    starter = starter[0].find_elements(By.CSS_SELECTOR, "li")[2]
-    starter.click()
-    
-    
+    time.sleep(api_delay_term)
     team_stat_df1 = pd.DataFrame(columns=[
         "team_name", "Goals", "Shots pg", "Yellow", "Red", "Poss%", "Pass%", 
         "A_Won", "Rating"
@@ -506,12 +521,13 @@ def league_table_added(URL, api_delay_term=2):
         }
         team_stat_df1.loc[len(team_stat_df1)] = team_table_dict1
     
+    close_pop_up(driver)
     element = driver.find_element(By.CSS_SELECTOR, "a[href='#stage-team-stats-defensive']")
-    element.click()
-    
+    driver.execute_script("arguments[0].click();", element)
+
     time.sleep(api_delay_term)
-    
-    
+
+
     team_stat_df2 = pd.DataFrame(columns=[
         "team_name", "Shoted pg", "Tackles pg", "Intercept pg", "Fouls pg", "Offsides pg"
     ])
@@ -530,11 +546,12 @@ def league_table_added(URL, api_delay_term=2):
         }
         team_stat_df2.loc[len(team_stat_df2)] = team_table_dict2
     
+    close_pop_up(driver)
     element = driver.find_element(By.CSS_SELECTOR, "a[href='#stage-team-stats-offensive']")
-    element.click()
-    
+    driver.execute_script("arguments[0].click();", element)
+
     time.sleep(api_delay_term)
-    
+
     team_stat_df3 = pd.DataFrame(columns=[
         "team_name", "Shots OT pg", "Dribbles pg", "Fouled pg"
     ])
@@ -579,7 +596,7 @@ def crawling_league_teams(region, tournaments, api_delay_term=5):
     
     # connect webdriver
     url = "https://1xbet.whoscored.com/Regions/" + str(region) + "/Tournaments/" + str(tournaments)
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver = _create_driver()
     driver.get(url)
 
     # wait get league team datas
@@ -607,7 +624,7 @@ def crawling_league_teams(region, tournaments, api_delay_term=5):
     return team_df
 
 
-def crawling_player_summary(team_id, api_delay_term=5):
+def crawling_player_summary(team_id, api_delay_term=2):
     """
     crawling player statistics of certain team
     
@@ -621,8 +638,11 @@ def crawling_player_summary(team_id, api_delay_term=5):
 
     # connect webdriver
     url = "https://www.whoscored.com/Teams/" + str(team_id)
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver = _create_driver()
     driver.get(url)
+
+
+    time.sleep(api_delay_term)
 
     close_pop_up(driver)
     time.sleep(1)
@@ -680,18 +700,18 @@ def crawling_player_statistics(URL):
     
     """
     url = str(URL)
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver = _create_driver()
     driver.get(url)
     tabs = driver.window_handles
     
-    time.sleep(3)
+    time.sleep(2)
 
     while len(tabs) != 1:
         driver.switch_to.window(tabs[1])
         driver.close()
 
     driver.switch_to.window(tabs[0])
-    time.sleep(3)
+    time.sleep(2)
 
     close_pop_up(driver)
     time.sleep(1)
@@ -704,9 +724,12 @@ def crawling_player_statistics(URL):
     
     with tqdm(total=page, file=sys.stdout) as pbar :
         for i in range(page):
+            close_pop_up(driver)
+            
             if i != 0:
-                driver.find_element(By.ID, 'next').click()
-                time.sleep(4)
+                element = driver.find_element(By.ID, 'next')
+                driver.execute_script("arguments[0].click();", element)
+                time.sleep(2)
 
             temp_df = pd.DataFrame(columns=[
                 "player_name", "team_number", "team_name", "Apps", "Mins", "Goals",
@@ -754,23 +777,29 @@ def crawling_player_statistics_defensive(URL):
     
     """
     url = str(URL)
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver = _create_driver()
     driver.get(url)
     
     time.sleep(3)
     close_pop_up(driver)
     time.sleep(1)
 
-    driver.find_element(By.ID, 'next').click()
+    close_pop_up(driver)
+    element = driver.find_element(By.ID, 'next')
+    driver.execute_script("arguments[0].click();", element)
 
     time.sleep(3)
 
-    driver.find_element(By.ID, 'first').click()
-    
+    close_pop_up(driver)
+    element = driver.find_element(By.ID, 'first')
+    driver.execute_script("arguments[0].click();", element)
+
     time.sleep(3)
-    
-    driver.find_element(By.LINK_TEXT, "Defensive").click()
-    
+
+    close_pop_up(driver)
+    element = driver.find_element(By.LINK_TEXT, "Defensive")
+    driver.execute_script("arguments[0].click();", element)
+
     time.sleep(3)
     page = driver.find_elements(By.CSS_SELECTOR, '#statistics-paging-defensive > div > dl.listbox.right > dt > b')[0].get_attribute("textContent")
     page = int(page.split('/')[1].split(' ')[0])
@@ -781,8 +810,10 @@ def crawling_player_statistics_defensive(URL):
     
     with tqdm(total=page, file=sys.stdout) as pbar :
         for i in range(page):
+            close_pop_up(driver)
             if i != 0:
-                driver.find_element(By.LINK_TEXT, 'next').click()
+                element = driver.find_element(By.LINK_TEXT, 'next')
+                driver.execute_script("arguments[0].click();", element)
                 time.sleep(4)
 
             temp_df = pd.DataFrame(columns=[
@@ -835,24 +866,28 @@ def crawling_player_statistics_offensive(URL):
     
     """
     url = str(URL)
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver = _create_driver()
     driver.get(url)
     
     time.sleep(3)
+
     close_pop_up(driver)
-    time.sleep(1)
+    element = driver.find_element(By.ID, 'next')
+    driver.execute_script("arguments[0].click();", element)
 
-    driver.find_element(By.ID, 'next').click()
+    time.sleep(2)
 
-    time.sleep(3)
+    close_pop_up(driver)
+    element = driver.find_element(By.ID, 'first')
+    driver.execute_script("arguments[0].click();", element)
 
-    driver.find_element(By.ID, 'first').click()
-    
-    time.sleep(3)
-    
-    driver.find_element(By.LINK_TEXT, "Offensive").click()
-    
-    time.sleep(3)
+    time.sleep(2)
+
+    close_pop_up(driver)
+    element = driver.find_element(By.LINK_TEXT, "Offensive")
+    driver.execute_script("arguments[0].click();", element)
+
+    time.sleep(2)
     page = driver.find_elements(By.CSS_SELECTOR, '#statistics-paging-offensive > div > dl.listbox.right > dt > b')[0].get_attribute("textContent").split("\t")[0]
     page = int(page.split('/')[1].split(' ')[0])
     
@@ -862,9 +897,11 @@ def crawling_player_statistics_offensive(URL):
     
     with tqdm(total=page, file=sys.stdout) as pbar :
         for i in range(page):
+            close_pop_up(driver)
             if i != 0:
-                driver.find_element(By.LINK_TEXT, 'next').click()
-                time.sleep(4)
+                element = driver.find_element(By.LINK_TEXT, 'next')
+                driver.execute_script("arguments[0].click();", element)
+                time.sleep(2)
 
             temp_df = pd.DataFrame(columns=[
                 "player_name", "team_number", "team_name", "age","position", "Apps", "Mins", "Goals",
@@ -908,23 +945,29 @@ def crawling_player_statistics_offensive(URL):
 
 def crawling_player_statistics_passing(URL):
     url = str(URL)
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
+    driver = _create_driver()
     driver.get(url)
     
     time.sleep(3)
     close_pop_up(driver)
     time.sleep(1)
 
-    driver.find_element(By.ID, 'next').click()
+    close_pop_up(driver)
+    element = driver.find_element(By.ID, 'next')
+    driver.execute_script("arguments[0].click();", element)
 
     time.sleep(3)
 
-    driver.find_element(By.ID, 'first').click()
-    
+    close_pop_up(driver)
+    element = driver.find_element(By.ID, 'first')
+    driver.execute_script("arguments[0].click();", element)
+
     time.sleep(3)
-    
-    driver.find_element(By.LINK_TEXT, "Passing").click()
-    
+
+    close_pop_up(driver)
+    element = driver.find_element(By.LINK_TEXT, "Passing")
+    driver.execute_script("arguments[0].click();", element)
+
     time.sleep(3)
     page = driver.find_elements(By.CSS_SELECTOR, '#statistics-paging-passing > div > dl.listbox.right > dt > b')[0].get_attribute("textContent")
     page = int(page.split('/')[1].split(' ')[0])
@@ -935,8 +978,10 @@ def crawling_player_statistics_passing(URL):
     
     with tqdm(total=page, file=sys.stdout) as pbar :
         for i in range(page):
+            close_pop_up(driver)
             if i != 0:
-                driver.find_element(By.LINK_TEXT, 'next').click()
+                element = driver.find_element(By.LINK_TEXT, 'next')
+                driver.execute_script("arguments[0].click();", element)
                 time.sleep(4)
 
             temp_df = pd.DataFrame(columns=[
@@ -993,15 +1038,38 @@ def crwaling_player_stats_at_once(URL):
 def close_pop_up(driver):
     """
     close pop-up window
-    
+
     Args :
         driver : webdriver
-    
+
     return :
         None
-    
+
     """
+    # 1. "모두 수락" 버튼 클릭 (쿠키 동의 배너)
     try:
-        driver.find_elements(By.CLASS_NAME, 'webpush-swal2-close')[0].click()
+        accept_xpaths = [
+            "//a[contains(text(),'모두 수락')]",
+            "//button[contains(text(),'모두 수락')]",
+            "//a[contains(text(),'Accept All')]",
+            "//button[contains(text(),'Accept All')]",
+            "//a[contains(text(),'Accept all')]",
+            "//button[contains(text(),'Accept all')]",
+            "//a[contains(text(),'동의')]",
+            "//button[contains(text(),'동의')]",
+        ]
+        for xpath in accept_xpaths:
+            elements = driver.find_elements(By.XPATH, xpath)
+            for el in elements:
+                if el.is_displayed():
+                    driver.execute_script("arguments[0].click();", el)
+                    break
+    except:
+        pass
+    time.sleep(0.5)
+    # 2. webpush 팝업 닫기
+    try:
+        element = driver.find_elements(By.CLASS_NAME, 'webpush-swal2-close')[0]
+        driver.execute_script("arguments[0].click();", element)
     except:
         pass
