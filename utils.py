@@ -21,6 +21,7 @@ def _create_driver():
     opts.page_load_strategy = "eager"  # DOM 준비되면 바로 반환 (광고/이미지 대기 안함)
     driver = webdriver.Chrome(options=opts)
     driver.set_page_load_timeout(30)  # 30초 넘으면 타임아웃
+    driver.implicitly_wait(10)  # 요소 검색 시 최대 10초 대기 (즉시 찾으면 바로 통과)
     return driver
 
 
@@ -1046,30 +1047,36 @@ def close_pop_up(driver):
         None
 
     """
-    # 1. "모두 수락" 버튼 클릭 (쿠키 동의 배너)
+    # implicitly_wait 일시 해제 (팝업 없을 때 XPath마다 10초 대기 방지)
+    driver.implicitly_wait(0)
     try:
-        accept_xpaths = [
-            "//a[contains(text(),'모두 수락')]",
-            "//button[contains(text(),'모두 수락')]",
-            "//a[contains(text(),'Accept All')]",
-            "//button[contains(text(),'Accept All')]",
-            "//a[contains(text(),'Accept all')]",
-            "//button[contains(text(),'Accept all')]",
-            "//a[contains(text(),'동의')]",
-            "//button[contains(text(),'동의')]",
-        ]
-        for xpath in accept_xpaths:
-            elements = driver.find_elements(By.XPATH, xpath)
-            for el in elements:
-                if el.is_displayed():
-                    driver.execute_script("arguments[0].click();", el)
-                    break
-    except:
-        pass
-    time.sleep(0.5)
-    # 2. webpush 팝업 닫기
-    try:
-        element = driver.find_elements(By.CLASS_NAME, 'webpush-swal2-close')[0]
-        driver.execute_script("arguments[0].click();", element)
-    except:
-        pass
+        # 1. "모두 수락" 버튼 클릭 (쿠키 동의 배너)
+        try:
+            accept_xpaths = [
+                "//a[contains(text(),'모두 수락')]",
+                "//button[contains(text(),'모두 수락')]",
+                "//a[contains(text(),'Accept All')]",
+                "//button[contains(text(),'Accept All')]",
+                "//a[contains(text(),'Accept all')]",
+                "//button[contains(text(),'Accept all')]",
+                "//a[contains(text(),'동의')]",
+                "//button[contains(text(),'동의')]",
+            ]
+            for xpath in accept_xpaths:
+                elements = driver.find_elements(By.XPATH, xpath)
+                for el in elements:
+                    if el.is_displayed():
+                        driver.execute_script("arguments[0].click();", el)
+                        break
+        except:
+            pass
+        time.sleep(0.5)
+        # 2. webpush 팝업 닫기
+        try:
+            element = driver.find_elements(By.CLASS_NAME, 'webpush-swal2-close')[0]
+            driver.execute_script("arguments[0].click();", element)
+        except:
+            pass
+    finally:
+        # implicitly_wait 복원
+        driver.implicitly_wait(10)
