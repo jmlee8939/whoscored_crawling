@@ -20,7 +20,7 @@ def _create_driver():
     opts = ChromeOptions()
     opts.page_load_strategy = "eager"  # DOM 준비되면 바로 반환 (광고/이미지 대기 안함)
     driver = webdriver.Chrome(options=opts)
-    driver.set_page_load_timeout(30)  # 30초 넘으면 타임아웃
+    driver.set_page_load_timeout(30)
     driver.implicitly_wait(10)  # 요소 검색 시 최대 10초 대기 (즉시 찾으면 바로 통과)
     return driver
 

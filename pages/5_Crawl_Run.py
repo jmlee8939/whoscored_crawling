@@ -2,6 +2,8 @@
 import io
 import json
 import os
+import signal
+import subprocess
 import sys
 import threading
 import time
@@ -131,6 +133,7 @@ def _run_crawl(func, kwargs, crawl_type):
         "status": "running",
         "type": crawl_type,
         "started_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "pid": os.getpid(),
         "total": 0,
         "completed": 0,
         "errors": 0,
@@ -149,12 +152,14 @@ def _run_crawl(func, kwargs, crawl_type):
         status["result"] = result_str
         _write_status(status)
     except Exception as e:
-        _append_log(f"❌ 에러 발생: {e}")
+        # 정지(stopped)가 아닌 경우만 에러 처리
         status = _read_status()
-        status["status"] = "error"
-        status["error_msg"] = str(e)
-        status["completed_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        _write_status(status)
+        if status.get("status") != "stopped":
+            _append_log(f"❌ 에러 발생: {e}")
+            status["status"] = "error"
+            status["error_msg"] = str(e)
+            status["completed_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            _write_status(status)
     finally:
         sys.stdout = old_stdout
 
@@ -163,6 +168,48 @@ def _start_crawl(func, kwargs, crawl_type):
     """스레드를 생성하여 크롤링 시작."""
     t = threading.Thread(target=_run_crawl, args=(func, kwargs, crawl_type), daemon=True)
     t.start()
+
+
+def _stop_crawl():
+    """실행 중인 크롤링을 정지 — chromedriver/Chrome 프로세스 종료."""
+    status = _read_status()
+    if status.get("status") != "running":
+        return
+
+    _append_log("⏹️ 사용자가 크롤링을 정지했습니다.")
+    status["status"] = "stopped"
+    status["completed_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    _write_status(status)
+
+    # Selenium chromedriver + 자동화용 Chrome 프로세스 종료 (좀비 UE 제외)
+    try:
+        # chromedriver (정상 S 상태만)
+        result = subprocess.run(
+            ["pgrep", "-f", "chromedriver.*--port"],
+            capture_output=True, text=True,
+        )
+        for pid_str in result.stdout.strip().splitlines():
+            pid = int(pid_str)
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+
+        # Selenium이 띄운 Chrome (--test-type=webdriver 플래그가 있는 것만)
+        result = subprocess.run(
+            ["pgrep", "-f", "test-type=webdriver"],
+            capture_output=True, text=True,
+        )
+        for pid_str in result.stdout.strip().splitlines():
+            pid = int(pid_str)
+            try:
+                os.kill(pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+    except Exception:
+        pass
+
+    _append_log("⏹️ 크롤링 프로세스가 정지되었습니다.")
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -178,7 +225,13 @@ def live_monitor():
     if st_status == "running":
         crawl_type = status.get("type", "")
         started = status.get("started_at", "")
-        st.warning(f"🔄 **크롤링 실행 중** — {crawl_type} (시작: {started})")
+        col_status, col_stop = st.columns([4, 1])
+        with col_status:
+            st.warning(f"🔄 **크롤링 실행 중** — {crawl_type} (시작: {started})")
+        with col_stop:
+            if st.button("⏹️ 정지", key="btn_stop", type="primary"):
+                _stop_crawl()
+                st.rerun()
 
         # ── 진행률 ──
         total = status.get("total", 0)
@@ -217,6 +270,19 @@ def live_monitor():
             c3.metric("전체", total)
         if result:
             st.info(f"결과: {result}")
+
+    elif st_status == "stopped":
+        crawl_type = status.get("type", "")
+        completed_at = status.get("completed_at", "")
+        st.info(f"⏹️ **크롤링 정지됨** — {crawl_type} ({completed_at})")
+        total = status.get("total", 0)
+        completed = status.get("completed", 0)
+        errors = status.get("errors", 0)
+        if total > 0:
+            c1, c2, c3 = st.columns(3)
+            c1.metric("완료", completed)
+            c2.metric("에러", errors)
+            c3.metric("전체", total)
 
     elif st_status == "error":
         crawl_type = status.get("type", "")
